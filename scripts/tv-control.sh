@@ -64,7 +64,8 @@ sync_state() {
   local weekday hhmm
   weekday="$(TZ=Europe/Berlin date +%u)"
   hhmm="$(TZ=Europe/Berlin date +%H%M)"
-  if [[ "$weekday" -le 5 && "$hhmm" -ge "0745" && "$hhmm" -lt "1730" ]]; then
+  # Lexikografischer Vergleich von HHMM verhindert Oktal-Fehler bei 08xx/09xx.
+  if [[ "$weekday" -le 5 && "$hhmm" > "0744" && "$hhmm" < "1730" ]]; then
     on
   else
     off
