@@ -25,7 +25,7 @@ echo "Installiere Debian-Pakete …"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
   xfce4 lightdm lightdm-gtk-greeter xorg dbus-x11 \
-  chromium chromium-l10n cron cec-utils util-linux
+  chromium chromium-l10n cron cec-utils util-linux x11-xserver-utils
 
 if ! id ticketview >/dev/null 2>&1; then
   useradd --create-home --shell /bin/bash ticketview
