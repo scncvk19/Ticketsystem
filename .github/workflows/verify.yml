@@ -1,0 +1,37 @@
+name: Skriptpruefung
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bash-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+      - name: Syntax aller Shell-Skripte pruefen
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in scripts/*.sh; do
+            echo "Pruefe $script"
+            bash -n "$script"
+          done
+          bash -n config/ticket-display.conf.example
+      - name: Verzeichnisstruktur pruefen
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f docs/INSTALLATION.md
+          test -f docs/TESTPLAN.md
+          test -f config/ticket-display.conf.example
+          test -f scripts/install.sh
+          test -f scripts/browser-session.sh
+          test -f scripts/refresh-browser.sh
+          test -f scripts/tv-control.sh
+          test -f scripts/diagnostics.sh
