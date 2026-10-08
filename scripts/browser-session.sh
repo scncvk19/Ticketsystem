@@ -18,6 +18,13 @@ esac
 state="$HOME/.local/state/ticket-display"
 mkdir -p "$state" "$HOME/.cache/ticket-display"
 pid_file="$state/browser.pid"
+# TV-Standby wird über Fernseher/CEC gesteuert; XFCE-X11 soll die
+# aktive Anzeige nicht nach wenigen Minuten wegen Inaktivität abdunkeln.
+if command -v xset >/dev/null 2>&1; then
+  xset s off || true
+  xset s noblank || true
+  xset -dpms || true
+fi
 exec 9>"$state/launcher.lock"
 /usr/bin/flock -n 9 || exit 0
 
