@@ -107,7 +107,7 @@ Bedienung:
 - Alt+Tab: andere geöffnete Anwendung
 - Fenster minimieren: Zugriff auf XFCE-Desktop
 
-Der Browser wird nach einem manuellen Schließen oder Absturz wieder geöffnet. Um dauerhaft andere Inhalte zu zeigen, im selben Browser navigieren oder andere Programme über Alt+Tab nutzen. Um **07:44 werktags** wird ausschließlich der dedizierte Ticket-Browser neu gestartet, sodass wieder die konfigurierte Ticketseite erscheint.
+Der Browser wird nach einem manuellen Schließen oder Absturz wieder geöffnet. Das Startskript deaktiviert zusätzlich X11-Leerlauf-Abdunkelung via `xset`. **Unbedingt** in XFCE unter Einstellungen → Energieverwaltung und Bildschirmschoner prüfen, dass kein automatisches Sperren, Suspendieren oder Abschalten innerhalb des Anzeigezeitraums greift. Um dauerhaft andere Inhalte zu zeigen, im selben Browser navigieren oder andere Programme über Alt+Tab nutzen. Um **07:44 werktags** wird ausschließlich der dedizierte Ticket-Browser neu gestartet, sodass wieder die konfigurierte Ticketseite erscheint.
 
 ## 6 – Zeitsteuerung
 
