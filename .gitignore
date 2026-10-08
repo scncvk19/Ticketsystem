@@ -1,0 +1,13 @@
+# Geräte-, Login- und Testdaten gehören nicht ins Repository
+.env
+.env.*
+!.env.example
+*.local
+*.log
+*.bak
+*.swp
+*~
+__pycache__/
+.DS_Store
+config/ticket-display.conf
+settings.conf
