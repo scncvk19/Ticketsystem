@@ -2,5 +2,7 @@
 # Durch scripts/install.sh einmalig kopiert; bei späterem Installieren nicht überschrieben.
 # KEINE Benutzernamen, Passwörter, Tokens oder Cookies eintragen!
 TICKET_URL="https://tickets.beispiel.intern"
+# Grafischer Benutzer für Auto-Login, Browser und VNC (muss bereits existieren).
+DISPLAY_USER="cevik"
 # none = TV-Zeitplan am Fernseher; cec = über HDMI-CEC und cec-client steuern.
 TV_CONTROL="none"
