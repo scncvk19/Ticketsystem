@@ -34,12 +34,12 @@ bash scripts/install.sh
 reboot
 ```
 
-Die lokale `/etc/ticket-display.conf` bleibt erhalten. Beim Start von `ticketview` wird die URL **ausschließlich auf dem Tiny-PC** in die Erweiterungskonfiguration unter `~ticketview/.local/share/ticket-display/extension/config.js` geschrieben; diese Datei wird nicht eingecheckt.
+Die lokale `/etc/ticket-display.conf` bleibt erhalten. Beim Start von `cevik` wird die URL **ausschließlich auf dem Tiny-PC** in die Erweiterungskonfiguration unter `/home/cevik/.local/share/ticket-display/extension/config.js` geschrieben; diese Datei wird nicht eingecheckt.
 
 ## Funktionsprüfung
 
 1. Nach dem Boot sollte Chromium die Ticketseite öffnen.
-2. In Chromium `chrome://extensions` aufrufen (bei Vollbild zuvor F11); die Erweiterung **Ticket Display – 60s Refresh** sollte erscheinen. Sie stammt aus `~ticketview/.local/share/ticket-display/extension`.
+2. In Chromium `chrome://extensions` aufrufen (bei Vollbild zuvor F11); die Erweiterung **Ticket Display – 60s Refresh** sollte erscheinen. Sie stammt aus `/home/cevik/.local/share/ticket-display/extension`.
 3. Zur Ticketseite zurückkehren. Bei geöffneter Ticketseite nach ungefähr einer Minute beobachten, ob eine Seitenaktualisierung erfolgt (am einfachsten im Netzwerktab der Entwicklerwerkzeuge oder durch einen sichtbaren Ladestatus).
 4. In einer **zweiten Registerkarte** eine andere Webseite öffnen und Text in ein Formular schreiben. Nach über 60 Sekunden darf die zweite Seite nicht neu geladen werden.
 5. Die registrierte Ticket-Registerkarte auf eine andere Webadresse ändern und mehr als eine Minute warten: die andere Seite darf **nicht** neu geladen werden.
