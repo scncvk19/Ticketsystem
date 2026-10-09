@@ -16,9 +16,14 @@ done
 
 echo
 echo "Anzeige-Nutzer:"
-if id ticketview >/dev/null 2>&1; then
-  id ticketview
-  home="$(getent passwd ticketview | cut -d: -f6)"
+if [[ -r /etc/ticket-display.conf ]]; then
+  # shellcheck disable=SC1091
+  . /etc/ticket-display.conf
+fi
+display_user="${DISPLAY_USER:-cevik}"
+if id "$display_user" >/dev/null 2>&1; then
+  id "$display_user"
+  home="$(getent passwd "$display_user" | cut -d: -f6)"
   if [[ -e "$home/.local/state/ticket-display/browser.pid" ]]; then
     echo "Browser PID-Datei vorhanden."
     cat "$home/.local/state/ticket-display/browser.pid"
@@ -26,7 +31,7 @@ if id ticketview >/dev/null 2>&1; then
     echo "Browser PID-Datei noch nicht vorhanden."
   fi
 else
-  echo "ticketview fehlt."
+  echo "$display_user fehlt."
 fi
 
 echo
@@ -40,6 +45,12 @@ if [[ -r /etc/ticket-display.conf ]]; then
   fi
 else
   echo "Konfiguration fehlt."
+fi
+
+echo
+echo "VNC (soll nur auf Loopback lauschen):"
+if command -v ss >/dev/null 2>&1; then
+  ss -tln | grep ':5900' || echo "Keine VNC-Verbindung auf :5900 geöffnet."
 fi
 
 echo
