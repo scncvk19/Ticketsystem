@@ -2,6 +2,14 @@
 
 Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC zeigt das vorhandene Ticketsystem werktags auf einem Fernseher an. Andere Webseiten und Präsentationen können über den XFCE-Desktop geöffnet werden.
 
+## 👋 Neu im Team? Hier starten!
+
+**[Kurzanleitung für neue Mitarbeiterinnen und Mitarbeiter (ca. 2 Minuten)](docs/START-HIER.md)**
+
+Dort findest du ohne Linux-Vorkenntnisse: **Was ist die Anzeige? Wann läuft sie? Wie wechsle ich zu anderen Inhalten? Was tun bei einer Störung?**
+
+**Für die IT:** Die ausführliche [Installationsanleitung](docs/INSTALLATION.md), [Fernwartung](docs/DIRECT-VNC.md) und [Testcheckliste](docs/TESTPLAN.md) bleiben separat.
+
 > **Projektstand (09.10.2026):** Debian/Tiny-PC wurde vor Ort eingerichtet. Die neue 60-Sekunden-Erweiterung ist im Repository implementiert, aber auf der Maschine noch **nicht** getestet. TV/CEC, Login und Ticket-Refresh müssen separat geprüft werden. Dieses Repository enthält **keine** Ticketdaten oder Zugangsdaten.
 
 ## Gewünschter Betrieb
@@ -19,7 +27,7 @@ Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC
 
 ## Umstellung auf cevik (Benutzer ticketview wird abgelöst)
 
-**Die ausführliche Migrationsanleitung steht unter [docs/MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md).** `ticketview` erst löschen, nachdem `cevik` nach dem Neustart die Ticketseite im Chromium anzeigt und VNC funktioniert. Die alte Chromium-Sitzung wird nicht automatisch übertragen; Ticket-Login ggf. einmal als `cevik` wiederholen. VNC wird nur lokal auf `127.0.0.1:5900` angeboten und über SSH getunnelt.
+**Die ausführliche Migrationsanleitung steht unter [docs/MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md).** `ticketview` erst löschen, nachdem `cevik` nach dem Neustart die Ticketseite im Chromium anzeigt und VNC funktioniert. Die alte Chromium-Sitzung wird nicht automatisch übertragen; Ticket-Login ggf. einmal als `cevik` wiederholen. VNC ist standardmäßig nur auf `127.0.0.1:5900` über SSH erreichbar; ein direkter Zugriff per IP muss ausdrücklich lokal konfiguriert und in der Firewall begrenzt werden.
 
 ## Einrichten / bereits installierten Tiny-PC aktualisieren
 
@@ -102,6 +110,7 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 
 ## Dokumentation und Dateien
 
+- **[Start hier – Kurzanleitung für neue Teammitglieder](docs/START-HIER.md)**
 - [Installation und Konfiguration](docs/INSTALLATION.md)
 - [Checkliste / Funktionstest](docs/TESTPLAN.md)
 - [Konfigurationsvorlage](config/ticket-display.conf.example)
@@ -112,7 +121,7 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [Manueller Browser-Neustart (nicht zeitgesteuert)](scripts/refresh-browser.sh)
 - [TV-Steuerung](scripts/tv-control.sh)
 - [Diagnose](scripts/diagnostics.sh)
-- [VNC-Autostart (nur lokaler SSH-Tunnel)](scripts/vnc-session.sh)
+- [VNC-Autostart (SSH-Standard, optional direkte IP)](scripts/vnc-session.sh)
 - [Migration zu cevik](docs/MIGRATION-CEVIK.md)
 - [Optionaler direkter VNC-Zugriff über IP](docs/DIRECT-VNC.md)
 
