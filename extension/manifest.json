@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Ticket Display – 60s Refresh",
+  "version": "1.0.0",
+  "description": "Aktualisiert ausschließlich die im Ticket-Display festgelegte Browser-Registerkarte.",
+  "permissions": ["alarms", "storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
