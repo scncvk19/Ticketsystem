@@ -36,6 +36,7 @@ jobs:
           set -euo pipefail
           test -f README.md
           test -f docs/INSTALLATION.md
+          test -f docs/START-HIER.md
           test -f docs/TESTPLAN.md
           test -f config/ticket-display.conf.example
           test -f scripts/install.sh
