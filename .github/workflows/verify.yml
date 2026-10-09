@@ -22,6 +22,14 @@ jobs:
             bash -n "$script"
           done
           bash -n config/ticket-display.conf.example
+      - name: Extension und Tests prüfen
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check extension/background.js
+          node --check tests/refresh.test.cjs
+          node -e 'const m = require("./extension/manifest.json"); if (m.manifest_version !== 3) process.exit(1)'
+          node --test tests/refresh.test.cjs
       - name: Verzeichnisstruktur pruefen
         shell: bash
         run: |
