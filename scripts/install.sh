@@ -80,7 +80,7 @@ cat > "$home/.config/autostart/ticket-display-vnc.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=Ticketanzeige VNC
-Comment=Nur lokaler VNC-Zugriff über einen SSH-Tunnel
+Comment=VNC-Zugriff laut lokaler Konfiguration (standardmäßig SSH-Tunnel)
 Exec=/usr/local/bin/ticket-display-vnc
 Terminal=false
 X-GNOME-Autostart-enabled=true
