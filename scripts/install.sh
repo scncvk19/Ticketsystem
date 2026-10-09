@@ -25,7 +25,7 @@ echo "Installiere Debian-Pakete …"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
   xfce4 lightdm lightdm-gtk-greeter xorg dbus-x11 \
-  chromium chromium-l10n cron cec-utils util-linux x11-xserver-utils
+  chromium chromium-l10n cron cec-utils util-linux x11-xserver-utils python3-minimal
 
 if ! id ticketview >/dev/null 2>&1; then
   useradd --create-home --shell /bin/bash ticketview
@@ -42,6 +42,12 @@ install -m 0755 "$root/scripts/browser-session.sh" /usr/local/bin/ticket-display
 install -m 0755 "$root/scripts/refresh-browser.sh" /usr/local/bin/ticket-display-refresh
 install -m 0755 "$root/scripts/tv-control.sh" /usr/local/bin/ticket-display-tv
 install -m 0755 "$root/scripts/diagnostics.sh" /usr/local/bin/ticket-display-diagnose
+
+# Erweiterung enthält nur statischen Code. Die echte Ticket-URL bleibt
+# lokal in /etc/ticket-display.conf und wird beim Browserstart eingebunden.
+install -d -m 0755 /usr/local/share/ticket-display/extension
+install -m 0644 "$root/extension/manifest.json" /usr/local/share/ticket-display/extension/manifest.json
+install -m 0644 "$root/extension/background.js" /usr/local/share/ticket-display/extension/background.js
 
 install -d -m 0755 -o ticketview -g "$group" "$home/.config"
 install -d -m 0755 -o ticketview -g "$group" "$home/.config/autostart"
@@ -74,8 +80,9 @@ chmod 0644 /etc/lightdm/lightdm.conf.d/50-ticket-display.conf
 cat > /etc/cron.d/ticket-display <<'CRON'
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-# Montag bis Freitag 07:44: Browser neu mit Ticket-URL starten
-44 7 * * 1-5 ticketview /usr/local/bin/ticket-display-refresh
+# Kein automatischer Gesamtneustart von Chromium um 07:44!
+# Die 60-Sekunden-Erweiterung aktualisiert nur das Ticket-Tab.
+# So bleiben andere Seiten/Präsentationen auch morgens unberührt.
 # Montag bis Freitag 07:45: TV einschalten, sofern CEC aktiv
 45 7 * * 1-5 root /usr/local/bin/ticket-display-tv on
 # Montag bis Freitag 17:30: TV Standby, sofern CEC aktiv
@@ -96,4 +103,5 @@ echo "1) Mit: sudo nano /etc/ticket-display.conf die Ticket-URL setzen."
 echo "2) TV-Einschaltplan im TV konfigurieren ODER nach CEC-Test TV_CONTROL=cec setzen."
 echo "3) Mit: sudo reboot neu starten."
 echo "4) Prüfen: sudo ticket-display-diagnose"
+echo "5) Im Ticket-Browser chrome://extensions aufrufen: Ticket Display – 60s Refresh muss aktiv sein."
 echo "WICHTIG: Der reale TV-Standby und die Ticketanmeldung sind noch nicht verifiziert."
