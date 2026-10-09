@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Läuft nur in der grafischen XFCE-Sitzung des unprivilegierten Users ticketview.
+# Läuft im grafischen XFCE-Desktop des konfigurierten Anzeige-Benutzers (standardmäßig cevik).
 cfg=/etc/ticket-display.conf
 if [[ ! -r "$cfg" ]]; then
   echo "Konfiguration fehlt: $cfg" >&2; exit 1
@@ -10,6 +10,11 @@ fi
 # shellcheck disable=SC1090
 . "$cfg"
 url="${TICKET_URL:-}"
+display_user="${DISPLAY_USER:-cevik}"
+if [[ "$(id -un)" != "$display_user" ]]; then
+  echo "Browser muss als $display_user gestartet werden, nicht als $(id -un)." >&2
+  exit 1
+fi
 case "$url" in
   http://*|https://*) ;;
   *) echo "TICKET_URL ist keine http(s)-Adresse; /etc/ticket-display.conf prüfen" >&2; exit 1 ;;
