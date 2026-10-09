@@ -114,6 +114,7 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [Diagnose](scripts/diagnostics.sh)
 - [VNC-Autostart (nur lokaler SSH-Tunnel)](scripts/vnc-session.sh)
 - [Migration zu cevik](docs/MIGRATION-CEVIK.md)
+- [Optionaler direkter VNC-Zugriff über IP](docs/DIRECT-VNC.md)
 
 ## Sicherheit
 
