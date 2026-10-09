@@ -2,7 +2,7 @@
 
 Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC zeigt das vorhandene Ticketsystem werktags auf einem Fernseher an. Andere Webseiten und Präsentationen können über den XFCE-Desktop geöffnet werden.
 
-> **Projektstand (08.10.2026):** Vorbereitung abgeschlossen bzw. Installationsvorlage. **Nicht auf realer Hardware getestet.** Fernseher/CEC, Netzwerk, Login und Ticketsystem müssen vor Ort geprüft werden. Dieses Repository enthält **keine** Ticketdaten und keine Zugangsdaten.
+> **Projektstand (09.10.2026):** Debian/Tiny-PC wurde vor Ort eingerichtet. Die neue 60-Sekunden-Erweiterung ist im Repository implementiert, aber auf der Maschine noch **nicht** getestet. TV/CEC, Login und Ticket-Refresh müssen separat geprüft werden. Dieses Repository enthält **keine** Ticketdaten oder Zugangsdaten.
 
 ## Gewünschter Betrieb
 
@@ -12,12 +12,27 @@ Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC
 | Samstag/Sonntag | TV aus / Standby |
 | Tiny-PC | bleibt eingeschaltet; startet nach Stromausfall wenn BIOS entsprechend eingestellt |
 | Betriebssystem | Debian 13 + XFCE (X11) + LightDM |
-| Browser | Chromium, automatischer Vollbildstart |
+| Browser | Chromium, automatischer Vollbildstart und 60-Sekunden-Refresh nur des Ticket-Tabs |
 | Ticketseite | vorhandener Webserver, URL vor Ort eintragen |
 | Andere Inhalte | F11 für Desktop-/Browser-Nutzung, Alt+Tab für andere Anwendungen |
 | TV-Steuerung | TV-interner Wochenplan **oder** HDMI-CEC bei kompatibler Hardware |
 
-## Morgen starten – Schnellweg
+## Einrichten / bereits installierten Tiny-PC aktualisieren
+
+Wenn Debian und das Repository bereits installiert sind, genügt:
+
+```bash
+cd ~/Ticketsystem  # oder der tatsächlich verwendete Klon-Pfad
+git pull
+sudo bash scripts/install.sh
+sudo reboot
+```
+
+Wenn das Repository als root unter `/root/Ticketsystem` liegt: `su -`, dann `cd /root/Ticketsystem`, `git pull`, `bash scripts/install.sh` und `reboot`.
+
+**Wichtig:** Die Datei `/etc/ticket-display.conf` mit deiner bereits eingetragenen Ticket-URL wird vom Installer **nicht** überschrieben. Die Browser-Erweiterung wird beim Anmelden automatisch aus dieser URL konfiguriert. Funktion überprüfen: `chrome://extensions` → **Ticket Display – 60s Refresh**. Siehe [Autorefresh-Dokumentation](docs/AUTO-REFRESH.md).
+
+## Erstinstallation – Schnellweg
 
 1. Debian 13 mit **XFCE** auf dem Tiny-PC installieren; LAN anschließen, Uhrzeit/Zeitzone prüfen.
 2. Repo klonen (bei privatem Repository Anmeldung über GitHub/SSH erforderlich):
@@ -61,7 +76,8 @@ Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC
 ## Tägliches Verhalten
 
 - Nach jedem Boot startet der Browser automatisch mit der Ticketseite, auch wenn der TV gerade aus ist.
-- Um **07:44** wird der Browser einmal neu gestartet, damit am nächsten Tag wieder die **Ticket-Startseite** angezeigt wird.
+- **Alle 60 Sekunden** wird ausschließlich die konfigurierte Ticket-Registerkarte neu geladen, sofern sie noch die Ticket-URL anzeigt. Andere Tabs werden nicht angefasst.
+- Kein automatischer Browser-Gesamtneustart um 07:44 mehr; damit bleiben andere Inhalte ungestört. Nach einem PC-Neustart startet das Ticket-Fenster wieder mit der Ticketseite.
 - Um **07:45** wird per CEC der Fernseher eingeschaltet, falls CEC aktiviert ist.
 - Um **17:30** geht er per CEC in Standby, falls CEC aktiviert ist.
 - Beim Systemstart gleicht die Steuerung nach kurzer Verzögerung den TV-Zustand mit der Uhrzeit ab.
@@ -76,7 +92,7 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 | Normale Ticketanzeige | nach Anmeldung automatisch im Vollbild |
 | Andere Webadresse aufrufen | **F11** (Vollbild verlassen), **Strg+L**, URL eingeben |
 | Präsentation anzeigen | **Alt+Tab** oder Chromium minimieren; Datei/Programm am XFCE-Desktop öffnen |
-| Tickets wieder anzeigen | Chromium öffnen und Ticket-URL ansteuern; spätestens am nächsten Werktag 07:44 automatischer Neustart |
+| Tickets wieder anzeigen | Zum Ticket-Tab wechseln oder konfigurierte Ticket-URL wieder aufrufen; nach PC-Neustart startet sie automatisch |
 | Manuell TV schalten (CEC) | `sudo ticket-display-tv on` / `sudo ticket-display-tv off` |
 | Sofort Ausgangszustand prüfen | `sudo ticket-display-tv sync` |
 
@@ -87,7 +103,9 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [Konfigurationsvorlage](config/ticket-display.conf.example)
 - [Installer](scripts/install.sh)
 - [Browser-Session](scripts/browser-session.sh)
-- [Browser-Tagesreset](scripts/refresh-browser.sh)
+- [Autorefresh – Bedienung, Tests und Grenzen](docs/AUTO-REFRESH.md)
+- [Chromium-Erweiterung](extension/background.js)
+- [Manueller Browser-Neustart (nicht zeitgesteuert)](scripts/refresh-browser.sh)
 - [TV-Steuerung](scripts/tv-control.sh)
 - [Diagnose](scripts/diagnostics.sh)
 
@@ -106,7 +124,7 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [ ] Ticket-URL, Authentifizierung und gewünschter Dashboard-/Filterlink
 - [ ] TV-CEC-Verfügbarkeit oder funktionierender TV-Wochenplan
 - [ ] Netzwerkkonnektivität, DNS, Zertifikate, Bildschirmauflösung
-- [ ] Ticket-Aktualisierung (automatisch durch Anwendung oder Browser-Reload erforderlich?)
+- [ ] 60-Sekunden-Refresh der Ticket-Registerkarte und ungestörter Wechsel auf andere Inhalte auf dem Tiny-PC getestet
 - [ ] Umgang mit Login-Timeout und Ticketanzeige beim Netzwerkausfall
 
 Lizenz: vorerst keine gesetzt. Das Projekt ist zunächst eine interne Bereitstellungs- und Dokumentationsvorlage.
