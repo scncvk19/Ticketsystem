@@ -19,7 +19,11 @@
 - [ ] `sudo bash scripts/install.sh` erfolgreich
 - [ ] `TICKET_URL` in `/etc/ticket-display.conf` gesetzt
 - [ ] `sudo reboot` durchgeführt
-- [ ] ticketview automatisch angemeldet, Chromium startet mit Ticket-URL
+- [ ] cevik automatisch angemeldet, Chromium startet mit Ticket-URL
+- [ ] VNC-Passwortdatei für cevik vorhanden und Server nur über 127.0.0.1:5900 erreichbar
+- [ ] Windows SSH-Tunnel und TightVNC Viewer funktionieren
+- [ ] Alte x11vnc-Autostart-Regel deaktiviert
+- [ ] ticketview erst nach erfolgreichem Test samt Profil gelöscht
 - [ ] Login in Ticketansicht funktioniert und Session läuft stabil
 - [ ] F11, Strg+L, Alt+Tab und Wechsel auf andere Inhalte funktionieren
 
