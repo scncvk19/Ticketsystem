@@ -67,7 +67,7 @@ async function ensureAlarm() {
 
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name !== ALARM_NAME) return;
-  refreshTicket().catch(error => console.error("Ticket refresh:", error));
+  return refreshTicket().catch(error => console.error("Ticket refresh:", error));
 });
 
 chrome.runtime.onStartup.addListener(() => {
