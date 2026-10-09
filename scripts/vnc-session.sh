@@ -45,7 +45,7 @@ done
 if [[ "$vnc_listen_ip" != "127.0.0.1" ]]; then
   ready=false
   for _ in {1..90}; do
-    if /usr/sbin/ip -4 -o addr show | grep -Fq "inet $vnc_listen_ip/"; then
+    if ip -4 -o addr show | grep -Fq "inet $vnc_listen_ip/"; then
       ready=true
       break
     fi
