@@ -18,30 +18,43 @@ fi
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd -- "$here/.." && pwd)"
 
-echo "ACHTUNG: LightDM-Autologin für ticketview und werktägliche TV-Schaltzeiten werden eingerichtet."
+# /etc/ticket-display.conf existiert auf bereits installierten Geräten und
+# enthält die lokale Ticket-URL. Auf keinen Fall überschreiben.
+if [[ ! -e /etc/ticket-display.conf ]]; then
+  install -m 0644 "$root/config/ticket-display.conf.example" /etc/ticket-display.conf
+fi
+# Die Konfiguration ist root-kontrolliert; Benutzername ist optional.
+# shellcheck disable=SC1091
+. /etc/ticket-display.conf
+display_user="${DISPLAY_USER:-cevik}"
+if ! id "$display_user" >/dev/null 2>&1; then
+  echo "Anzeigebenutzer '$display_user' fehlt. Bitte zuerst regulär in Debian anlegen." >&2
+  exit 1
+fi
+if [[ "$display_user" == "root" ]]; then
+  echo "Aus Sicherheitsgründen kein Browser-Autologin als root." >&2
+  exit 1
+fi
+group="$(id -gn "$display_user")"
+home="$(getent passwd "$display_user" | cut -d: -f6)"
+echo "ACHTUNG: LightDM-Autologin für $display_user und werktägliche TV-Schaltzeiten werden eingerichtet."
 echo "Nur auf einem dedizierten Anzeige-PC fortfahren!"
 echo
 echo "Installiere Debian-Pakete …"
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
   xfce4 lightdm lightdm-gtk-greeter xorg dbus-x11 \
-  chromium chromium-l10n cron cec-utils util-linux x11-xserver-utils python3-minimal
+  chromium chromium-l10n cron cec-utils util-linux x11-xserver-utils python3-minimal x11vnc
 
-if ! id ticketview >/dev/null 2>&1; then
-  useradd --create-home --shell /bin/bash ticketview
-fi
-group="$(id -gn ticketview)"
-home="$(getent passwd ticketview | cut -d: -f6)"
-
-# Konfigurationsdatei nie überschreiben.
-if [[ ! -e /etc/ticket-display.conf ]]; then
-  install -m 0644 "$root/config/ticket-display.conf.example" /etc/ticket-display.conf
-fi
+# Benutzer ticketview wird nicht mehr angelegt.
+# Eine eventuell vorhandene alte Benutzerkennung löschen wir absichtlich
+# NICHT automatisch: erst nach Neustart und Prüfung manuell entfernen.
 
 install -m 0755 "$root/scripts/browser-session.sh" /usr/local/bin/ticket-display-browser
 install -m 0755 "$root/scripts/refresh-browser.sh" /usr/local/bin/ticket-display-refresh
 install -m 0755 "$root/scripts/tv-control.sh" /usr/local/bin/ticket-display-tv
 install -m 0755 "$root/scripts/diagnostics.sh" /usr/local/bin/ticket-display-diagnose
+install -m 0755 "$root/scripts/vnc-session.sh" /usr/local/bin/ticket-display-vnc
 
 # Erweiterung enthält nur statischen Code. Die echte Ticket-URL bleibt
 # lokal in /etc/ticket-display.conf und wird beim Browserstart eingebunden.
@@ -49,10 +62,10 @@ install -d -m 0755 /usr/local/share/ticket-display/extension
 install -m 0644 "$root/extension/manifest.json" /usr/local/share/ticket-display/extension/manifest.json
 install -m 0644 "$root/extension/background.js" /usr/local/share/ticket-display/extension/background.js
 
-install -d -m 0755 -o ticketview -g "$group" "$home/.config"
-install -d -m 0755 -o ticketview -g "$group" "$home/.config/autostart"
-install -d -m 0700 -o ticketview -g "$group" "$home/.local/state/ticket-display"
-install -d -m 0700 -o ticketview -g "$group" "$home/.cache/ticket-display"
+install -d -m 0755 -o "$display_user" -g "$group" "$home/.config"
+install -d -m 0755 -o "$display_user" -g "$group" "$home/.config/autostart"
+install -d -m 0700 -o "$display_user" -g "$group" "$home/.local/state/ticket-display"
+install -d -m 0700 -o "$display_user" -g "$group" "$home/.cache/ticket-display"
 
 cat > "$home/.config/autostart/ticket-display.desktop" <<'DESKTOP'
 [Desktop Entry]
@@ -63,14 +76,23 @@ Exec=/usr/local/bin/ticket-display-browser
 Terminal=false
 X-GNOME-Autostart-enabled=true
 DESKTOP
-chown ticketview:"$group" "$home/.config/autostart/ticket-display.desktop"
-chmod 0644 "$home/.config/autostart/ticket-display.desktop"
+cat > "$home/.config/autostart/ticket-display-vnc.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Ticketanzeige VNC
+Comment=Nur lokaler VNC-Zugriff über einen SSH-Tunnel
+Exec=/usr/local/bin/ticket-display-vnc
+Terminal=false
+X-GNOME-Autostart-enabled=true
+DESKTOP
+chown "$display_user":"$group" "$home/.config/autostart/ticket-display.desktop" "$home/.config/autostart/ticket-display-vnc.desktop"
+chmod 0644 "$home/.config/autostart/ticket-display.desktop" "$home/.config/autostart/ticket-display-vnc.desktop"
 
 # Xfce unter X11 statt Wayland; LightDM greift dieses Snippet auf.
 install -d -m 0755 /etc/lightdm/lightdm.conf.d
-cat > /etc/lightdm/lightdm.conf.d/50-ticket-display.conf <<'LIGHTDM'
+cat > /etc/lightdm/lightdm.conf.d/50-ticket-display.conf <<LIGHTDM
 [Seat:*]
-autologin-user=ticketview
+autologin-user=$display_user
 autologin-user-timeout=0
 user-session=xfce
 LIGHTDM
@@ -98,7 +120,10 @@ systemctl enable --now cron
 systemctl enable lightdm
 
 echo
-echo "Installation abgeschlossen."
+echo "Installation abgeschlossen. Automatischer Desktop-Benutzer: $display_user."
+echo "VNC-Start braucht die Passwortdatei: $home/.vnc/passwd (als $display_user per x11vnc -storepasswd anlegen)."
+echo "Falls x11vnc schon per XFCE manuell gestartet wird, den alten Autostart entfernen."
+echo "ticketview bleibt bis zur manuellen Freigabe/Löschung bestehen."
 echo "1) Mit: sudo nano /etc/ticket-display.conf die Ticket-URL setzen."
 echo "2) TV-Einschaltplan im TV konfigurieren ODER nach CEC-Test TV_CONTROL=cec setzen."
 echo "3) Mit: sudo reboot neu starten."
