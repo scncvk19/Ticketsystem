@@ -30,10 +30,10 @@ sudo bash scripts/install.sh
 ```
 
 Das Skript:
-- installiert XFCE/LightDM/Chromium/cron/cec-utils;
+- installiert XFCE/LightDM/Chromium/cron/cec-utils und Python zur lokalen Extension-Konfiguration;
 - erstellt `ticketview` (kein sudo, ausschließlich Anzeige);
 - erstellt `/etc/ticket-display.conf` **nur wenn noch nicht vorhanden**;
-- installiert Programme unter `/usr/local/bin/ticket-display-*`;
+- installiert Programme unter `/usr/local/bin/ticket-display-*` und die lokale Chromium-Extension unter `/usr/local/share/ticket-display/extension`;
 - richtet einen XFCE-Autostart und das LightDM-Autologin ein;
 - installiert Cron-Jobs für Mo–Fr sowie für Neustarts;
 - stellt die Systemzeitzone auf **Europe/Berlin**.
@@ -107,7 +107,13 @@ Bedienung:
 - Alt+Tab: andere geöffnete Anwendung
 - Fenster minimieren: Zugriff auf XFCE-Desktop
 
-Der Browser wird nach einem manuellen Schließen oder Absturz wieder geöffnet. Das Startskript deaktiviert zusätzlich X11-Leerlauf-Abdunkelung via `xset`. **Unbedingt** in XFCE unter Einstellungen → Energieverwaltung und Bildschirmschoner prüfen, dass kein automatisches Sperren, Suspendieren oder Abschalten innerhalb des Anzeigezeitraums greift. Um dauerhaft andere Inhalte zu zeigen, im selben Browser navigieren oder andere Programme über Alt+Tab nutzen. Um **07:44 werktags** wird ausschließlich der dedizierte Ticket-Browser neu gestartet, sodass wieder die konfigurierte Ticketseite erscheint.
+Der Browser wird nach einem manuellen Schließen oder Absturz wieder geöffnet. Das Startskript deaktiviert zusätzlich X11-Leerlauf-Abdunkelung via `xset`. **Unbedingt** in XFCE unter Einstellungen → Energieverwaltung und Bildschirmschoner prüfen, dass kein automatisches Sperren, Suspendieren oder Abschalten innerhalb des Anzeigezeitraums greift.
+
+### Automatischer Seiten-Refresh
+
+Eine lokale Chromium-Extension aktualisiert **nur das registrierte Ticket-Tab** im Abstand von **60 Sekunden**; andere Tabs oder Desktop-Programme bleiben unangetastet. Wenn du im Ticket-Tab zu einer anderen URL wechselst, wird dieses nicht neu geladen. Der separate automatische Browser-Gesamtneustart um 07:44 wurde bewusst entfernt. Nach einem vollständigen Neustart des Tiny-PCs öffnet sich das Ticketsystem erneut automatisch.
+
+Prüfen: `chrome://extensions` öffnen. Die Erweiterung **Ticket Display – 60s Refresh** muss aktiv sein. Alle Einzelheiten und Testfälle stehen unter [AUTO-REFRESH.md](AUTO-REFRESH.md).
 
 ## 6 – Zeitsteuerung
 
@@ -115,7 +121,7 @@ Nach der Installation liegt der Zeitplan in `/etc/cron.d/ticket-display`:
 
 | Zeit | Tage | Aktion |
 |---|---|---|
-| 07:44 | Mo–Fr | Browser zur Ticket-URL zurücksetzen |
+| alle ca. 60 Sekunden | solange Chromium läuft | nur die Ticketseite neu laden, per lokaler Erweiterung |
 | 07:45 | Mo–Fr | TV einschalten (nur CEC) |
 | 17:30 | Mo–Fr | TV Standby (nur CEC) |
 | beim Systemstart | alle Tage | TV-Zustand nach ca. 90 Sekunden angleichen (nur CEC) |
@@ -136,13 +142,13 @@ Bei TV-eigenem Zeitplan (`TV_CONTROL=none`) sendet der Tiny-PC keine TV-Befehle.
 |---|---|
 | Nach Boot Login-Bildschirm | LightDM aktiv? `systemctl status lightdm`; `/etc/lightdm/lightdm.conf.d/50-ticket-display.conf` |
 | Browser startet nicht | XFCE-X11-Sitzung? `~/.config/autostart/ticket-display.desktop`, URL valide? Als `ticketview` prüfen |
-| Browser zeigt alte Inhalte | Täglicher Browser-Reset um 07:44 prüfen, `systemctl status cron` |
+| Browser zeigt alte Inhalte | `chrome://extensions` prüfen; `TICKET_URL` muss exakt zur geöffneten Ticketseite passen; siehe [AUTO-REFRESH.md](AUTO-REFRESH.md) |
 | Browser zeigt Login-Seite | Ticketkonto/Session-TTL/SSO/MFA klären; keine Authentifizierung umgehen |
 | TV zeigt „Kein Signal“ statt Standby | Kein TV-Standby; TV-Wochenplan oder CEC nutzen |
 | `cec-client -l` ohne Gerät | Adapter nicht vorhanden/inkompatibel; HDMI-Port allein oft unzureichend |
 | Bildschirm geht während Dienstzeit aus | XFCE-Bildschirmschoner, Sperre, TV-Auto-Abschaltung und HDMI-Quelle kontrollieren |
 | Nach Stromausfall kein Ticketbild | BIOS Power Restore, Netz, LightDM, Cron, Anzeigeausgabe prüfen |
-| Ticketinhalt aktualisiert sich nicht | Autorefresh/Websocket-Funktion des Ticketsystems oder separaten Browserreload planen |
+| Ticketinhalt aktualisiert sich nicht | Erweiterung aktiviert? Ist die Ticketseite vollständig geladen und nicht auf `/login` umgeleitet? [AUTO-REFRESH.md](AUTO-REFRESH.md) |
 
 ## 8 – Abnahme und Übergabe
 
