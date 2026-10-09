@@ -6,3 +6,6 @@ TICKET_URL="https://tickets.beispiel.intern"
 DISPLAY_USER="cevik"
 # none = TV-Zeitplan am Fernseher; cec = über HDMI-CEC und cec-client steuern.
 TV_CONTROL="none"
+# VNC-Standard: SSH-Tunnel über 127.0.0.1. Für direkten Zugriff eine
+# konkrete lokale IPv4 eintragen und UFW auf einzelne Admin-IP begrenzen.
+VNC_LISTEN_IP="127.0.0.1"
