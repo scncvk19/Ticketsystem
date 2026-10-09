@@ -17,6 +17,10 @@ Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC
 | Andere Inhalte | F11 für Desktop-/Browser-Nutzung, Alt+Tab für andere Anwendungen |
 | TV-Steuerung | TV-interner Wochenplan **oder** HDMI-CEC bei kompatibler Hardware |
 
+## Umstellung auf cevik (Benutzer ticketview wird abgelöst)
+
+**Die ausführliche Migrationsanleitung steht unter [docs/MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md).** `ticketview` erst löschen, nachdem `cevik` nach dem Neustart die Ticketseite im Chromium anzeigt und VNC funktioniert. Die alte Chromium-Sitzung wird nicht automatisch übertragen; Ticket-Login ggf. einmal als `cevik` wiederholen. VNC wird nur lokal auf `127.0.0.1:5900` angeboten und über SSH getunnelt.
+
 ## Einrichten / bereits installierten Tiny-PC aktualisieren
 
 Wenn Debian und das Repository bereits installiert sind, genügt:
@@ -49,7 +53,7 @@ Wenn das Repository als root unter `/root/Ticketsystem` liegt: `su -`, dann `cd 
    sudo bash scripts/install.sh
    ```
 
-   Er installiert benötigte Pakete, legt den unprivilegierten Benutzer `ticketview` an, aktiviert dessen automatische grafische Anmeldung und richtet den Browser-Autostart und die Cron-Zeiten ein. Vorhandene `/etc/ticket-display.conf` wird **nicht überschrieben**.
+   Er installiert benötigte Pakete und richtet die grafische Auto-Anmeldung, den Browser-Autostart, den lokalen VNC-Zugriff sowie die Cron-Zeiten für **cevik** ein. Er erstellt `ticketview` nicht erneut. Vorhandene `/etc/ticket-display.conf` wird **nicht überschrieben**.
 
 4. Ticket-URL in der lokalen Konfiguration anpassen (**keine Zugangsdaten in die URL schreiben**):
 
@@ -108,6 +112,8 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [Manueller Browser-Neustart (nicht zeitgesteuert)](scripts/refresh-browser.sh)
 - [TV-Steuerung](scripts/tv-control.sh)
 - [Diagnose](scripts/diagnostics.sh)
+- [VNC-Autostart (nur lokaler SSH-Tunnel)](scripts/vnc-session.sh)
+- [Migration zu cevik](docs/MIGRATION-CEVIK.md)
 
 ## Sicherheit
 
