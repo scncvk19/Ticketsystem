@@ -31,10 +31,10 @@ sudo bash scripts/install.sh
 
 Das Skript:
 - installiert XFCE/LightDM/Chromium/cron/cec-utils und Python zur lokalen Extension-Konfiguration;
-- erstellt `ticketview` (kein sudo, ausschließlich Anzeige);
+- verwendet den vorhandenen Benutzer **`cevik`** für den Desktop (optional über `DISPLAY_USER` in der lokalen Konfiguration einstellbar); `ticketview` wird nicht angelegt;
 - erstellt `/etc/ticket-display.conf` **nur wenn noch nicht vorhanden**;
 - installiert Programme unter `/usr/local/bin/ticket-display-*` und die lokale Chromium-Extension unter `/usr/local/share/ticket-display/extension`;
-- richtet einen XFCE-Autostart und das LightDM-Autologin ein;
+- richtet einen XFCE-Autostart für Chromium und einen lokalen x11vnc-Server sowie das LightDM-Autologin für `cevik` ein;
 - installiert Cron-Jobs für Mo–Fr sowie für Neustarts;
 - stellt die Systemzeitzone auf **Europe/Berlin**.
 
@@ -97,7 +97,7 @@ sudo ticket-display-tv sync
 sudo reboot
 ```
 
-Anschließend meldet LightDM `ticketview` automatisch an, XFCE lädt die Autostart-Datei und Chromium wird im **Vollbild** geöffnet.
+Anschließend meldet LightDM `cevik` automatisch an, XFCE lädt die Autostart-Datei und Chromium wird im **Vollbild** geöffnet. Die Übernahme einer Altinstallation mit `ticketview` ist in [MIGRATION-CEVIK.md](MIGRATION-CEVIK.md) beschrieben.
 
 Im Chromium die Ticketanmeldung einmalig vornehmen, sofern nötig. Kein Speichern von Klartext-Passwörtern oder Zugangsdaten im Repo.
 
@@ -141,7 +141,7 @@ Bei TV-eigenem Zeitplan (`TV_CONTROL=none`) sendet der Tiny-PC keine TV-Befehle.
 | Symptom | Prüfen |
 |---|---|
 | Nach Boot Login-Bildschirm | LightDM aktiv? `systemctl status lightdm`; `/etc/lightdm/lightdm.conf.d/50-ticket-display.conf` |
-| Browser startet nicht | XFCE-X11-Sitzung? `~/.config/autostart/ticket-display.desktop`, URL valide? Als `ticketview` prüfen |
+| Browser startet nicht | XFCE-X11-Sitzung? `~/.config/autostart/ticket-display.desktop`, URL valide? Als `cevik` prüfen |
 | Browser zeigt alte Inhalte | `chrome://extensions` prüfen; `TICKET_URL` muss exakt zur geöffneten Ticketseite passen; siehe [AUTO-REFRESH.md](AUTO-REFRESH.md) |
 | Browser zeigt Login-Seite | Ticketkonto/Session-TTL/SSO/MFA klären; keine Authentifizierung umgehen |
 | TV zeigt „Kein Signal“ statt Standby | Kein TV-Standby; TV-Wochenplan oder CEC nutzen |
@@ -149,6 +149,10 @@ Bei TV-eigenem Zeitplan (`TV_CONTROL=none`) sendet der Tiny-PC keine TV-Befehle.
 | Bildschirm geht während Dienstzeit aus | XFCE-Bildschirmschoner, Sperre, TV-Auto-Abschaltung und HDMI-Quelle kontrollieren |
 | Nach Stromausfall kein Ticketbild | BIOS Power Restore, Netz, LightDM, Cron, Anzeigeausgabe prüfen |
 | Ticketinhalt aktualisiert sich nicht | Erweiterung aktiviert? Ist die Ticketseite vollständig geladen und nicht auf `/login` umgeleitet? [AUTO-REFRESH.md](AUTO-REFRESH.md) |
+
+## VNC über SSH
+
+Für den grafischen Fernzugriff wird x11vnc im **cevik-Desktop** automatisch gestartet (nur wenn `~/.vnc/passwd` vorhanden ist). Bei Bedarf lokal als `cevik` mit `x11vnc -storepasswd` ein VNC-Passwort vergeben. Bereits manuell eingerichtete x11vnc-Autostarts deaktivieren, damit es keinen Portkonflikt gibt. Der VNC-Server lauscht ausschließlich auf dem Loopback-Interface `127.0.0.1:5900`; **keine** UFW-Freigabe für Port 5900 setzen. Auf Windows über `ssh -N -L 5901:127.0.0.1:5900 cevik@IP-DES-TINY-PC` verbinden, anschließend TightVNC Viewer `127.0.0.1::5901`.
 
 ## 8 – Abnahme und Übergabe
 
