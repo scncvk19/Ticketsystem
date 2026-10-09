@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Neustart nur des dedizierten Ticket-Browsers. Ausführung als 'ticketview'.
-if [[ "$(id -un)" != "ticketview" ]]; then
-  echo "Dieses Skript nur als ticketview ausführen." >&2
+# Manueller Neustart nur des dedizierten Ticket-Browsers.
+if [[ -r /etc/ticket-display.conf ]]; then
+  # shellcheck disable=SC1091
+  . /etc/ticket-display.conf
+fi
+display_user="${DISPLAY_USER:-cevik}"
+if [[ "$(id -un)" != "$display_user" ]]; then
+  echo "Dieses Skript nur als $display_user ausführen." >&2
   exit 1
 fi
 pid_file="$HOME/.local/state/ticket-display/browser.pid"
