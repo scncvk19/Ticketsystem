@@ -45,3 +45,4 @@ jobs:
           test -f scripts/diagnostics.sh
           test -f scripts/vnc-session.sh
           test -f docs/MIGRATION-CEVIK.md
+          test -f docs/DIRECT-VNC.md
