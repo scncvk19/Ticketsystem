@@ -1,6 +1,6 @@
 # Checkliste für die Umsetzung
 
-**Geplanter Start:** Freitag, 09.10.2026.  
+**Installationsstart:** Freitag, 09.10.2026. Die neue Browser-Erweiterung muss nach Update und Neustart separat getestet werden.  
 **Betriebszeiten:** Montag–Freitag, 07:45–17:30 Uhr (Europe/Berlin).  
 **Status:** Installation/Tests auf echter Hardware noch offen.
 
@@ -33,7 +33,11 @@
 
 ## Automatik und Fehlersituationen
 
-- [ ] Zeitpunkt 07:44: Browser-Rückkehr zur Ticketseite (werktags)
+- [ ] Ticketseite wird ungefähr alle 60 Sekunden automatisch neu geladen
+- [ ] In einem zweiten Tab geöffnete Webseite bleibt dabei unberührt
+- [ ] Ticket-Tab auf andere URL navigieren: keine automatische Aktualisierung dieser anderen Seite
+- [ ] Ticket-Tab zur konfigurierten URL zurückführen: Aktualisierung setzt wieder ein
+- [ ] Kein unerwünschter Browser-Gesamtneustart um 07:44
 - [ ] Zeitpunkt 07:45: TV ist eingeschaltet (werktags)
 - [ ] Zeitpunkt 17:30: TV im Standby (werktags)
 - [ ] Sa/So keine automatische Einschaltung
