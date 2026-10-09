@@ -43,3 +43,5 @@ jobs:
           test -f scripts/refresh-browser.sh
           test -f scripts/tv-control.sh
           test -f scripts/diagnostics.sh
+          test -f scripts/vnc-session.sh
+          test -f docs/MIGRATION-CEVIK.md
