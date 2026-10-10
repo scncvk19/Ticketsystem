@@ -72,7 +72,7 @@ docker compose ps
 
 **Wichtige technische Hinweise:**
 
-- Compose verwendet derzeit das offizielle Image `rustdesk/rustdesk-server:latest`; **vor dem produktiven Rollout Version/Image-Digest prüfen und für reproduzierbare Updates pinnen**. `latest` ist für eine produktive Langzeitbereitstellung allein nicht ausreichend.
+- Compose verwendet das offizielle, **versionsgebundene Image `rustdesk/rustdesk-server:1.1.16`**. Vor einem produktiven Rollout Image-Herkunft/Sicherheitsstand prüfen; für maximale Reproduzierbarkeit bei Bedarf zusätzlich einen freigegebenen Image-Digest pinnen. Updates bewusst testen.
 - Docker-Publishing von Ports kann Host-Firewall-/UFW-Regeln umgehen. Die Adresseinschränkung aus `.env` und **zusätzlich** die zentrale Firewall/VPN-Richtlinie kontrollieren.
 - Nur für die genehmigten Windows-/Linux-Clients über internes LAN oder VPN erreichbar machen, **keine Internet-Portweiterleitung**.
 - Ohne Webclient benötigt der Server laut Dokumentation normalerweise TCP **21115**, TCP/UDP **21116**, TCP **21117**. TCP 21118/21119 (Webclients) sind in unserer Vorlage **nicht** veröffentlicht. Weitere Zugriffe und Optionen nach Bedarf und Sicherheitsfreigabe prüfen.
