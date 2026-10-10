@@ -11,3 +11,6 @@ __pycache__/
 .DS_Store
 config/ticket-display.conf
 settings.conf
+# RustDesk-Server: lokale Identität/Schlüssel/Datenbank und Laufzeitdateien
+/deploy/rustdesk-server/data/
+/deploy/rustdesk-server/.env
