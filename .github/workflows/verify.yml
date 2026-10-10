@@ -47,3 +47,16 @@ jobs:
           test -f scripts/vnc-session.sh
           test -f docs/MIGRATION-CEVIK.md
           test -f docs/DIRECT-VNC.md
+          test -f docs/RUSTDESK.md
+          test -f scripts/install-rustdesk.sh
+          test -f deploy/rustdesk-server/compose.yaml
+          test -f deploy/rustdesk-server/.env.example
+      - name: RustDesk deployment safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'sha256sum --check' scripts/install-rustdesk.sh
+          grep -F 'systemctl disable --now rustdesk.service' scripts/install-rustdesk.sh
+          ! grep -q 'install-rustdesk.sh' scripts/install.sh
+          grep -q '/deploy/rustdesk-server/data/' .gitignore
+          grep -q '/deploy/rustdesk-server/.env' .gitignore
