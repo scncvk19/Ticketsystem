@@ -5,7 +5,7 @@
 # hostseitig kontrollieren und tatsächliche Erreichbarkeit prüfen.
 services:
   hbbr:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.16
     command: ["hbbr"]
     restart: unless-stopped
     volumes:
@@ -14,7 +14,7 @@ services:
       - "${RUSTDESK_BIND_IP:?RUSTDESK_BIND_IP_in_env_setzen}:21117:21117/tcp"
 
   hbbs:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.16
     command: ["hbbs", "-r", "${RUSTDESK_SERVER_HOST:?RUSTDESK_SERVER_HOST_in_env_setzen}:21117"]
     restart: unless-stopped
     depends_on:
