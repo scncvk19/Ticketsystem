@@ -8,7 +8,7 @@ Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC
 
 Dort findest du ohne Linux-Vorkenntnisse: **Was ist die Anzeige? Wann läuft sie? Wie wechsle ich zu anderen Inhalten? Was tun bei einer Störung?**
 
-**Für die IT:** Die ausführliche [Installationsanleitung](docs/INSTALLATION.md), [Fernwartung](docs/DIRECT-VNC.md) und [Testcheckliste](docs/TESTPLAN.md) bleiben separat.
+**Für die IT:** Die ausführliche [Installationsanleitung](docs/INSTALLATION.md), [RustDesk-Fernwartung](docs/RUSTDESK.md), [bisherige VNC-Fernwartung](docs/DIRECT-VNC.md) und [Testcheckliste](docs/TESTPLAN.md) bleiben separat.
 
 > **Projektstand (09.10.2026):** Debian/Tiny-PC wurde vor Ort eingerichtet. Die neue 60-Sekunden-Erweiterung ist im Repository implementiert, aber auf der Maschine noch **nicht** getestet. TV/CEC, Login und Ticket-Refresh müssen separat geprüft werden. Dieses Repository enthält **keine** Ticketdaten oder Zugangsdaten.
 
@@ -28,6 +28,16 @@ Dort findest du ohne Linux-Vorkenntnisse: **Was ist die Anzeige? Wann läuft sie
 ## Umstellung auf cevik (Benutzer ticketview wird abgelöst)
 
 **Die ausführliche Migrationsanleitung steht unter [docs/MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md).** `ticketview` erst löschen, nachdem `cevik` nach dem Neustart die Ticketseite im Chromium anzeigt und VNC funktioniert. Die alte Chromium-Sitzung wird nicht automatisch übertragen; Ticket-Login ggf. einmal als `cevik` wiederholen. VNC ist standardmäßig nur auf `127.0.0.1:5900` über SSH erreichbar; ein direkter Zugriff per IP muss ausdrücklich lokal konfiguriert und in der Firewall begrenzt werden.
+
+## Optionale Fernwartung mit RustDesk (Windows ↔ Debian)
+
+Für die Fernsteuerung **derselben XFCE-Sitzung, die der Fernseher anzeigt**, ist RustDesk als **separat installierbare, optionale Ergänzung** vorbereitet. Sie wird **nicht** durch den normalen Ticket-Installer aktiviert. Die bestehende Ticketanzeige und VNC bleiben erhalten.
+
+- **[RustDesk – Installation, eigener Firmenserver, Windows-Verbindung und Rückweg](docs/RUSTDESK.md)**
+- Linux-Installer: [`scripts/install-rustdesk.sh`](scripts/install-rustdesk.sh) – offizielle RustDesk-Version **1.5.0** mit SHA-256-Prüfung; Systemdienst bleibt zunächst deaktiviert.
+- Optionaler interner ID-/Relayserver: [`deploy/rustdesk-server/compose.yaml`](deploy/rustdesk-server/compose.yaml); wird nicht automatisch gestartet.
+
+**Betrieb im Unternehmen nur nach Freigabe:** Auf beiden Clients den genehmigten internen RustDesk-Server und dessen öffentlichen Schlüssel konfigurieren, bevor unbeaufsichtigter Zugriff aktiviert wird. Windows-Installation und Windows-Konfiguration erfolgen separat.
 
 ## Einrichten / bereits installierten Tiny-PC aktualisieren
 
@@ -124,6 +134,9 @@ Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-
 - [VNC-Autostart (SSH-Standard, optional direkte IP)](scripts/vnc-session.sh)
 - [Migration zu cevik](docs/MIGRATION-CEVIK.md)
 - [Optionaler direkter VNC-Zugriff über IP](docs/DIRECT-VNC.md)
+- **[RustDesk-Fernwartung für Windows und Linux](docs/RUSTDESK.md)**
+- [RustDesk Linux-Installationsskript (opt-in)](scripts/install-rustdesk.sh)
+- [Optionale RustDesk-Server-Vorlage](deploy/rustdesk-server/compose.yaml)
 
 ## Sicherheit
 
