@@ -51,7 +51,7 @@ package="$workdir/$filename"
 url="https://github.com/rustdesk/rustdesk/releases/download/${RUSTDESK_VERSION}/$filename"
 
 curl --fail --location --show-error --silent --retry 3 \
-  --proto '=https' --tlsv1.2 \
+  --proto '=https' --proto-redir '=https' --tlsv1.2 \
   --output "$package" "$url"
 
 # Niemals heruntergeladenes Installationspaket ungeprüft ausführen.
