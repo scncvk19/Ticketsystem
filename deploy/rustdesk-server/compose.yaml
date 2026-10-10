@@ -1,0 +1,27 @@
+# Optionaler RustDesk-Server für ein freigegebenes internes Firmennetz.
+# NICHT auf dem Ticket-Tiny-PC nötig; vorzugsweise separater Server/VM.
+# Konfiguration aus .env; bindet nur an angegebene lokale IPv4.
+# Docker-Portveröffentlichungen können UFW-Regeln umgehen: Firewall extern/
+# hostseitig kontrollieren und tatsächliche Erreichbarkeit prüfen.
+services:
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    command: ["hbbr"]
+    restart: unless-stopped
+    volumes:
+      - ./data:/root
+    ports:
+      - "${RUSTDESK_BIND_IP:?RUSTDESK_BIND_IP_in_env_setzen}:21117:21117/tcp"
+
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    command: ["hbbs", "-r", "${RUSTDESK_SERVER_HOST:?RUSTDESK_SERVER_HOST_in_env_setzen}:21117"]
+    restart: unless-stopped
+    depends_on:
+      - hbbr
+    volumes:
+      - ./data:/root
+    ports:
+      - "${RUSTDESK_BIND_IP:?RUSTDESK_BIND_IP_in_env_setzen}:21115:21115/tcp"
+      - "${RUSTDESK_BIND_IP:?RUSTDESK_BIND_IP_in_env_setzen}:21116:21116/tcp"
+      - "${RUSTDESK_BIND_IP:?RUSTDESK_BIND_IP_in_env_setzen}:21116:21116/udp"
