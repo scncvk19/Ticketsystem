@@ -32,7 +32,7 @@ Die automatische Aktualisierung ist für die Ticketseite eingerichtet. Andere We
 | --- | --- |
 | Fernseher bleibt schwarz | Ist er eingeschaltet? Stimmt die HDMI-Quelle? |
 | „Kein Signal“ | HDMI-Eingang und Kabel prüfen. |
-| Anmeldeseite statt Tickets | Der IT Bescheid geben; keine fremden Zugangsdaten benutzen. |
+| Anmeldeseite statt Tickets | Der zuständigen IT Bescheid geben; keine fremden Zugangsdaten benutzen. |
 | Tickets werden nicht aktualisiert | Etwa eine Minute beobachten. Bleibt die Ansicht stehen, IT informieren. |
 | Präsentation ist noch zu sehen | Über `Alt + Tab` zur Ticketseite wechseln. |
 | Fernsehbild oder Browser hängt | Fehlermeldung und Uhrzeit notieren, dann IT informieren. |
