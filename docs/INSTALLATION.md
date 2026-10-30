@@ -1,161 +1,134 @@
-# Installationsanleitung – Debian 13 / XFCE
+# Ticketanzeige einrichten (Debian 13)
 
-## Voraussetzungen und Grenzen
+Diese Anleitung ist für einen eigenen Anzeige-PC gedacht. Sie beschreibt die Installation aus dem Repository und die wichtigsten Prüfungen danach.
 
-- Dedizierter Tiny-PC (beliebige geeignete x86-64-Hardware, mindestens 4 GB RAM; empfohlen 8 GB).
-- Debian 13 mit XFCE und X11. **Nicht** auf einem bereits anders genutzten Arbeitsplatz installieren: Der Installer richtet automatische Anmeldung ein.
-- TV über HDMI/DisplayPort-Adapter angeschlossen; bevorzugt LAN-Verbindung zum bestehenden Ticketsystem.
-- Ein internes, möglichst eingeschränktes Ticketkonto für die Bildschirmansicht.
-- Optional TV mit **wöchentlichem Ein-/Ausschaltplan** oder ein nutzbarer **HDMI-CEC-Adapter**. Normale PC-HDMI-Buchsen unterstützen CEC oft nicht.
-- Administratorzugang zum neuen PC. Bei privatem Repository Zugriff auf GitHub mittels Anmeldung oder eingerichtetem SSH-Schlüssel.
+Der Installer richtet eine automatische grafische Anmeldung ein. **Nicht auf einem normalen Arbeitsplatzrechner ausführen.**
 
-**Das Projekt hostet kein eigenes Ticketsystem.** Es zeigt nur eine vorhandene Webanwendung an.
+## Voraussetzungen
 
-## 1 – Betriebssystem installieren
+- Debian 13 mit XFCE und X11
+- vorhandener Benutzer `cevik` (oder ein zuvor angelegter Benutzer über `DISPLAY_USER`)
+- Netzwerkverbindung zum internen Ticketserver
+- Fernseher am HDMI-Anschluss
+- Root-Rechte für die Einrichtung
 
-1. Debian-13-ISO von debian.org beschaffen; ISO auf USB-Stick schreiben, davon booten.
-2. Bei Desktop-Auswahl **XFCE** statt GNOME wählen (LightDM/X11).
-3. Netzwerkkabel verbinden. Für einen dedizierten TV-PC einen lokalen Administrator anlegen.
-4. Nach Installation einmal grafisch anmelden, Internet/Intranet und die Ticket-URL im Browser testen.
-5. Falls BIOS vorhanden: `Power on after AC loss` / `Restore after power loss` auf Ein (nur wenn gewünscht).
+Ein TV-Ein-/Ausschaltplan ist eine eigene Aufgabe. Nicht jeder Fernseher kann automatisch auf HDMI starten.
 
-## 2 – Repository und Installer
+## 1. Repository installieren
 
-```bash
+Als normaler Benutzer mit `sudo`:
+
+~~~bash
 sudo apt update
 sudo apt install -y git
 git clone https://github.com/scncvk19/Ticketsystem.git
 cd Ticketsystem
 sudo bash scripts/install.sh
-```
+~~~
 
-Das Skript:
-- installiert XFCE/LightDM/Chromium/cron/cec-utils und Python zur lokalen Extension-Konfiguration;
-- verwendet den vorhandenen Benutzer **`cevik`** für den Desktop (optional über `DISPLAY_USER` in der lokalen Konfiguration einstellbar); `ticketview` wird nicht angelegt;
-- erstellt `/etc/ticket-display.conf` **nur wenn noch nicht vorhanden**;
-- installiert Programme unter `/usr/local/bin/ticket-display-*` und die lokale Chromium-Extension unter `/usr/local/share/ticket-display/extension`;
-- richtet einen XFCE-Autostart für Chromium und einen lokalen x11vnc-Server sowie das LightDM-Autologin für `cevik` ein;
-- installiert Cron-Jobs für Mo–Fr sowie für Neustarts;
-- stellt die Systemzeitzone auf **Europe/Berlin**.
+Falls `sudo` nicht eingerichtet ist, über `su -` zu root wechseln und die Installation ohne `sudo` ausführen. Der Benutzer für die grafische Anmeldung muss **vorher** existieren.
 
-Es setzt weder Ticket-URL noch Ticket-Zugangsdaten automatisch auf ein echtes System.
+Das Skript installiert unter anderem Chromium, XFCE/LightDM, x11vnc und die benötigten Hilfsprogramme. Es legt die Autostarts sowie die zeitgesteuerten TV-Befehle an.
 
-## 3 – Lokale Einstellungen
+**Achtung bei bereits eingerichteten PCs:** Der Installer schreibt die Autostart- und LightDM-Dateien neu. Vor Änderungen an anderen Geräten bestehende Konfigurationen sichern.
 
-```bash
+## 2. Ticketseite eintragen
+
+~~~bash
 sudo nano /etc/ticket-display.conf
-```
+~~~
 
-Beispiel:
-```bash
-TICKET_URL="https://mein-ticketserver.intern/dashboard"
+Wichtige Einträge:
+
+~~~ini
+TICKET_URL="https://tickets.beispiel.intern"
+DISPLAY_USER="cevik"
 TV_CONTROL="none"
-```
+VNC_LISTEN_IP="127.0.0.1"
+~~~
 
-**Keine Credentials in URL, Datei oder Repository eintragen.** Login/Session im Browser des Anzeige-Benutzers einrichten; bevorzugt ein dediziertes Read-only-Konto. Bei SSO/MFA die organisatorische Freigabe und Sitzungsdauer prüfen. Niemals HTTPS-Zertifikatswarnungen umgehen.
+Die URL ist hier nur ein Beispiel. Die echte Ticketadresse wird **ausschließlich auf dem Tiny-PC** eingetragen, nicht ins GitHub-Repository.
 
-## 4 – Fernsehervariante festlegen
+Der Installer erstellt die Datei nur, wenn sie noch nicht vorhanden ist. Bei späteren Updates bleiben die vorhandenen Einstellungen erhalten.
 
-### A: TV-eigener Wochenplan – zunächst bevorzugt
+## 3. Fernseher und Zeiten
 
-`TV_CONTROL="none"` beibehalten. Im TV-Menü (falls unterstützt):
-- Mo–Fr **07:45 EIN**
-- Mo–Fr **17:30 AUS / Standby**
-- Sa/So keine Einschaltung
-- Standard-/letzten HDMI-Eingang nutzen und Energiespar-, Auto-Off- und Werbe-/Startbildschirm-Einstellungen überprüfen
+Im Repository sind folgende Zeiten vorgesehen:
 
-**Nicht jeder Fernseher kann automatisch einschalten**; ein einfacher Sleep-Timer reicht nicht. Ist das nicht möglich, Variante B prüfen.
+| Tag | Ein | Aus |
+| --- | --- | --- |
+| Montag–Freitag | 07:45 | 17:30 |
+| Samstag/Sonntag | keine geplante Einschaltung | Standby |
 
-### B: HDMI-CEC – wenn Hardware geeignet
+Die Zeitsteuerung liegt in `/etc/cron.d/ticket-display`.
 
-TV-seitig HDMI-CEC einschalten (Herstellernamen z. B. Anynet+, Simplink, Bravia Sync).
-CEC am Tiny-PC prüfen:
-```bash
+Es gibt zwei Möglichkeiten:
+
+- **TV-eigener Zeitplan:** `TV_CONTROL="none"` lassen und Ein-/Ausschalten direkt am Fernseher einstellen.
+- **HDMI-CEC:** Nur verwenden, wenn am Tiny-PC ein geeigneter CEC-Adapter vorhanden ist und der Fernseher die Befehle annimmt. Dann `TV_CONTROL="cec"` setzen.
+
+CEC prüfen:
+
+~~~bash
 sudo ticket-display-tv status
-```
+~~~
 
-Wenn kein Gerät erkannt wird, heißt das häufig: eingebauter HDMI-Port hat **keine** CEC-Funktion. Dann geeigneten USB-HDMI-CEC-Adapter verwenden oder Variante A wählen.
+Wenn CEC tatsächlich verfügbar ist:
 
-Nur wenn CEC verfügbar ist:
-```bash
-sudo nano /etc/ticket-display.conf
-# TV_CONTROL="cec"
+~~~bash
 sudo ticket-display-tv on
 sudo ticket-display-tv off
-sudo ticket-display-tv sync
-```
+~~~
 
-**Erst prüfen, dann automatisieren!** TV muss wirklich ausschalten und wieder einschalten. Adapter, HDMI-Eingang, Fernsehermodell und CEC-Konfiguration entscheiden über das Ergebnis.
+Bei einigen älteren Samsung-Fernsehern lässt sich im Einschalttimer nur TV oder USB wählen, nicht HDMI. Der Browser kann korrekt laufen, während der Fernseher morgens trotzdem auf dem falschen Eingang startet. Auch eine automatische Abschaltung nach einigen Stunden muss am Gerät geprüft werden.
 
-### Nicht als TV-Abschaltung missverstehen
+**Wichtig:** Ein abgeschaltetes HDMI-Signal ist nicht dasselbe wie TV-Standby.
 
-`xset dpms force off` / Ausschalten des HDMI-Signals kann bei Fernsehgeräten einfach zu **„Kein Signal“** führen, ohne echten Standby. Deshalb in diesem Projekt nicht als verlässliche TV-Abschaltung verwendet.
+## 4. Neustart und Browser prüfen
 
-## 5 – Neustart und Browser
-
-```bash
+~~~bash
 sudo reboot
-```
+~~~
 
-Anschließend meldet LightDM `cevik` automatisch an, XFCE lädt die Autostart-Datei und Chromium wird im **Vollbild** geöffnet. Die Übernahme einer Altinstallation mit `ticketview` ist in [MIGRATION-CEVIK.md](MIGRATION-CEVIK.md) beschrieben.
+Nach dem Start soll LightDM den Anzeigebenutzer automatisch anmelden. Chromium öffnet die konfigurierte Ticketseite im Vollbild.
 
-Im Chromium die Ticketanmeldung einmalig vornehmen, sofern nötig. Kein Speichern von Klartext-Passwörtern oder Zugangsdaten im Repo.
+Bei Bedarf im Chromium-Menü das Vollbild wieder einschalten. `F11` kann bei Fernwartungssoftware abgefangen werden.
 
-Bedienung:
-- F11: Vollbild ein/aus
-- Strg+L: andere Webadresse
-- Alt+Tab: andere geöffnete Anwendung
-- Fenster minimieren: Zugriff auf XFCE-Desktop
+Die Erweiterung zur Aktualisierung heißt **Ticket Display – 60s Refresh**. Prüfen unter `chrome://extensions`. Wie sie arbeitet, steht in [AUTO-REFRESH.md](AUTO-REFRESH.md).
 
-Der Browser wird nach einem manuellen Schließen oder Absturz wieder geöffnet. Das Startskript deaktiviert zusätzlich X11-Leerlauf-Abdunkelung via `xset`. **Unbedingt** in XFCE unter Einstellungen → Energieverwaltung und Bildschirmschoner prüfen, dass kein automatisches Sperren, Suspendieren oder Abschalten innerhalb des Anzeigezeitraums greift.
+Die Browser-Anmeldung erfolgt am Gerät. Keine Passwörter, Browserprofile oder Sitzungscookies ins Repository kopieren.
 
-### Automatischer Seiten-Refresh
+## 5. Fernzugriff
 
-Eine lokale Chromium-Extension aktualisiert **nur das registrierte Ticket-Tab** im Abstand von **60 Sekunden**; andere Tabs oder Desktop-Programme bleiben unangetastet. Wenn du im Ticket-Tab zu einer anderen URL wechselst, wird dieses nicht neu geladen. Der separate automatische Browser-Gesamtneustart um 07:44 wurde bewusst entfernt. Nach einem vollständigen Neustart des Tiny-PCs öffnet sich das Ticketsystem erneut automatisch.
+Für Fernwartung ist x11vnc vorgesehen. Die Verbindung zeigt den Bildschirm, der auch über HDMI ausgegeben wird.
 
-Prüfen: `chrome://extensions` öffnen. Die Erweiterung **Ticket Display – 60s Refresh** muss aktiv sein. Alle Einzelheiten und Testfälle stehen unter [AUTO-REFRESH.md](AUTO-REFRESH.md).
+Ab Werk bindet x11vnc an `127.0.0.1:5900`. Der Zugriff erfolgt damit über SSH-Tunneling. Eine direkte Verbindung zur Geräte-IP ist optional möglich, muss aber einzeln abgesichert werden. Alle Schritte stehen in [DIRECT-VNC.md](DIRECT-VNC.md).
 
-## 6 – Zeitsteuerung
+RustDesk ist unabhängig davon vorbereitet, wird aber nicht durch diesen Installer installiert. Siehe [RUSTDESK.md](RUSTDESK.md).
 
-Nach der Installation liegt der Zeitplan in `/etc/cron.d/ticket-display`:
+## 6. Fehler eingrenzen
 
-| Zeit | Tage | Aktion |
-|---|---|---|
-| alle ca. 60 Sekunden | solange Chromium läuft | nur die Ticketseite neu laden, per lokaler Erweiterung |
-| 07:45 | Mo–Fr | TV einschalten (nur CEC) |
-| 17:30 | Mo–Fr | TV Standby (nur CEC) |
-| beim Systemstart | alle Tage | TV-Zustand nach ca. 90 Sekunden angleichen (nur CEC) |
+Als root oder mit `sudo`:
 
-**Wichtig:** `cron` arbeitet nach der lokalen **Systemzeitzone**; der Installer stellt Europe/Berlin ein. Sommer-/Winterzeitumstellung berücksichtigen. Ist das Gerät am Schaltzeitpunkt vollständig ausgeschaltet, kann Cron den Termin nicht nachholen; deshalb den Tiny-PC durchlaufen lassen. Der Boot-Abgleich greift nach einem Neustart.
+~~~bash
+ticket-display-diagnose
+systemctl status lightdm
+systemctl status cron
+~~~
 
-Schneller Test für den jeweils aktuellen Zeitpunkt:
-```bash
-sudo ticket-display-tv sync
-sudo ticket-display-diagnose
-```
+| Problem | Prüfen |
+| --- | --- |
+| Login-Bildschirm statt Desktop | LightDM-Konfiguration und Benutzer |
+| Chromium öffnet nicht | XFCE-Autostart, Ticket-URL, Browserprofil |
+| Ticketansicht bleibt stehen | `chrome://extensions`, URL, Netzwerk und Sitzung |
+| Fernseher zeigt „Kein Signal“ | HDMI-Eingang, Kabel, TV-Schaltplan |
+| VNC nicht erreichbar | VNC-Passwort, Autostart, IP-Bindung und Firewall |
+| Bildschirm wird dunkel | TV-Energiesparen und XFCE-Energieverwaltung |
 
-Bei TV-eigenem Zeitplan (`TV_CONTROL=none`) sendet der Tiny-PC keine TV-Befehle. Die Schaltzeiten müssen dann **am Fernseher selbst** eingestellt werden.
+Vor der Übergabe die [Prüfliste](TESTPLAN.md) abarbeiten. Vor allem die Zeitsteuerung und das Verhalten nach einem längeren Netzwerk- oder Stromausfall gesondert testen.
 
-## 7 – Typische Fehler
+## Hinweise für den Betrieb
 
-| Symptom | Prüfen |
-|---|---|
-| Nach Boot Login-Bildschirm | LightDM aktiv? `systemctl status lightdm`; `/etc/lightdm/lightdm.conf.d/50-ticket-display.conf` |
-| Browser startet nicht | XFCE-X11-Sitzung? `~/.config/autostart/ticket-display.desktop`, URL valide? Als `cevik` prüfen |
-| Browser zeigt alte Inhalte | `chrome://extensions` prüfen; `TICKET_URL` muss exakt zur geöffneten Ticketseite passen; siehe [AUTO-REFRESH.md](AUTO-REFRESH.md) |
-| Browser zeigt Login-Seite | Ticketkonto/Session-TTL/SSO/MFA klären; keine Authentifizierung umgehen |
-| TV zeigt „Kein Signal“ statt Standby | Kein TV-Standby; TV-Wochenplan oder CEC nutzen |
-| `cec-client -l` ohne Gerät | Adapter nicht vorhanden/inkompatibel; HDMI-Port allein oft unzureichend |
-| Bildschirm geht während Dienstzeit aus | XFCE-Bildschirmschoner, Sperre, TV-Auto-Abschaltung und HDMI-Quelle kontrollieren |
-| Nach Stromausfall kein Ticketbild | BIOS Power Restore, Netz, LightDM, Cron, Anzeigeausgabe prüfen |
-| Ticketinhalt aktualisiert sich nicht | Erweiterung aktiviert? Ist die Ticketseite vollständig geladen und nicht auf `/login` umgeleitet? [AUTO-REFRESH.md](AUTO-REFRESH.md) |
+Die automatische Anmeldung und das gemeinsame Ticketdisplay sind nur sinnvoll, wenn Standort und Berechtigungen intern freigegeben sind. Den Ticketzugang möglichst auf eine Leseansicht beschränken.
 
-## VNC über SSH
-
-Für den grafischen Fernzugriff wird x11vnc im **cevik-Desktop** automatisch gestartet (nur wenn `~/.vnc/passwd` vorhanden ist). Bei Bedarf lokal als `cevik` mit `x11vnc -storepasswd` ein VNC-Passwort vergeben. Bereits manuell eingerichtete x11vnc-Autostarts deaktivieren, damit es keinen Portkonflikt gibt. Der VNC-Server lauscht ausschließlich auf dem Loopback-Interface `127.0.0.1:5900`; **keine** UFW-Freigabe für Port 5900 setzen. Auf Windows über `ssh -N -L 5901:127.0.0.1:5900 cevik@IP-DES-TINY-PC` verbinden, anschließend TightVNC Viewer `127.0.0.1::5901`.
-
-## 8 – Abnahme und Übergabe
-
-Alle Punkte der [Testcheckliste](TESTPLAN.md) durchgehen. Danach ggf. mit dem Betrieb IT-Sicherheitsfreigabe/Datenschutz/Sichtbarkeit und Wartungszuständigkeit klären.
-
-**Achtung:** Die Installation ist ein realer Systemeingriff. Nicht ungeprüft auf produktiven Arbeitsplätzen ausführen. Vorhandene LightDM-Customizing-/Cron-Konfiguration vor Eingriff sichern. Sicherheitsupdates planbar einspielen; Ticket-Browserprofil lokal geschützt halten.
+Updates regelmäßig einspielen, Zugänge begrenzen und den Server für die Ticketanwendung getrennt administrieren. Der Tiny-PC hostet kein eigenes Ticketsystem.
