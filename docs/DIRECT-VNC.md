@@ -1,98 +1,70 @@
-# Direkter TightVNC-Zugriff über die IP-Adresse (opt-in)
+# Fernzugriff auf den Tiny-PC mit VNC
 
-**Stand 09.10.2026 – Debian 13 / XFCE / Tiny-PC**
+Auf dem Tiny-PC läuft x11vnc. Damit sieht man aus der Ferne dieselbe XFCE-Sitzung, die auch auf dem Fernseher angezeigt wird.
 
-Standard ist und bleibt der verschlüsselte SSH-Tunnel (`VNC_LISTEN_IP="127.0.0.1"`). Die hier dokumentierte direkte VNC-Verbindung ist nur für **ausdrücklich autorisierte, kontrollierte interne Netze** gedacht. Herkömmliches VNC überträgt Bildschirminhalt und Eingaben **nicht transportverschlüsselt**. Unternehmensvorgaben und Sichtbarkeit der Ticketdaten berücksichtigen; im Zweifel den SSH-Tunnel benutzen.
+**Standard ist VNC über SSH.** Der direkte Zugriff auf Port 5900 ist optional, aber nicht verschlüsselt. Für betriebliche Ticketdaten ist der SSH-Tunnel die bessere Wahl.
 
-## Direkte Verbindung einschalten
+## Standard: VNC über SSH
 
-Der Tiny-PC hat im bisher geprüften WLAN `192.168.19.174/24`. Der Windows-Administrationsrechner wurde als `192.168.19.61` beobachtet (IP vor Ort bestätigen).
+Auf dem Windows-Rechner in PowerShell einen Tunnel zum Tiny-PC öffnen:
 
-Vorhandenes Repository als root aktualisieren:
+~~~powershell
+ssh -N -L 5901:127.0.0.1:5900 cevik@<IP-des-Tiny-PCs>
+~~~
 
-```bash
-su -
-cd /root/Ticketsystem
-git pull
-```
+Im TightVNC Viewer danach `127.0.0.1::5901` eintragen. Der Tunnel bleibt geöffnet, solange der SSH-Befehl läuft.
 
-In der lokalen Gerätekonfiguration einmalig folgende Zeile ergänzen bzw. korrigieren:
+Auf Debian ist dafür normalerweise `VNC_LISTEN_IP="127.0.0.1"` in `/etc/ticket-display.conf` gesetzt.
 
-```bash
-nano /etc/ticket-display.conf
-```
+## Optional: direkte Verbindung im internen Netz
 
-```ini
-VNC_LISTEN_IP="192.168.19.174"
-```
+Nur mit Freigabe der zuständigen IT und mit eingeschränkter Firewall-Regel verwenden.
 
-Die vorhandene `TICKET_URL` und `TV_CONTROL` unverändert lassen.
+1. Die aktuelle IPv4-Adresse des Tiny-PCs mit `ip -4 -br addr` feststellen.
+2. In `/etc/ticket-display.conf` die Variable `VNC_LISTEN_IP` auf genau diese lokale IPv4-Adresse setzen.
+3. Mit `ufw status numbered` die Firewall prüfen. Port **5900/tcp** nur für den festgelegten Administrationsrechner öffnen, nicht für das gesamte Netzwerk.
+4. Eine feste DHCP-Zuordnung für den Tiny-PC vorsehen. Wenn seine IP wechselt, funktioniert die Einstellung nicht mehr.
+5. Neu starten und danach mit `ss -tlnp | grep ':5900'` kontrollieren, ob x11vnc an der richtigen Adresse lauscht.
 
-Installer erneut ausführen:
+Bei direktem Zugriff wird im Viewer `<IP-des-Tiny-PCs>::5900` eingetragen.
 
-```bash
-bash scripts/install.sh
-```
+Eine allgemeine UFW-Regel wie `5900/tcp ALLOW Anywhere` darf nicht stehen bleiben. Bei Docker, VPN oder mehreren Netzwerkschnittstellen zusätzlich den tatsächlichen Zugriffsweg prüfen.
 
-Der Installer überschreibt `/etc/ticket-display.conf` **nicht**. VNC startet anschließend in der grafischen Sitzung von `cevik`, wartet bei verzögertem WLAN bis zu 180 Sekunden auf die lokale Adresse, und bindet Port 5900 nur an diese IPv4. Wenn der PC nach einem Neustart eine andere IP erhält, muss `VNC_LISTEN_IP` angepasst werden; besser DHCP-Reservierung am Router setzen.
+## Passwort und Autostart
 
-## Firewall
+Die Passwortdatei gehört dem Desktop-Benutzer, standardmäßig `cevik`:
 
-Vorhandene VNC-Regeln kontrollieren:
-
-```bash
-ufw status numbered
-```
-
-Nur vom bestätigten Windows-Admin-PC aus freigeben:
-
-```bash
-ufw allow from 192.168.19.61 to 192.168.19.174 port 5900 proto tcp
-```
-
-Wenn zuvor eine allgemeine Regel wie `5900/tcp ALLOW IN 192.168.19.0/24` existierte, sie **anschließend** per `ufw delete NUMMER` entfernen (vorher mit `ufw status numbered` die richtige aktuelle Nummer prüfen). Keine allgemeine Freigabe `5900/tcp ALLOW Anywhere` behalten. Auf Windows muss `192.168.19.61` weiterhin die tatsächlich verwendete Quell-IP sein; wenn nicht, Firewall-Regel entsprechend ändern.
-
-## VNC-Passwort und doppelte Autostarts
-
-Als `cevik` prüfen, dass `/home/cevik/.vnc/passwd` existiert:
-
-```bash
+~~~bash
 ls -l /home/cevik/.vnc/passwd
-```
+~~~
 
-Sonst als `cevik` lokal (nicht root!) mit `x11vnc -storepasswd` erzeugen.
+Falls sie fehlt, lokal als `cevik` (nicht als root) erzeugen:
 
-Falls bereits ein eigenständiger XFCE-VNC-Autostart angelegt ist, diesen deaktivieren. Der Installer verwendet ausschließlich `/home/cevik/.config/autostart/ticket-display-vnc.desktop`, welcher `/usr/local/bin/ticket-display-vnc` aufruft.
+~~~bash
+x11vnc -storepasswd
+~~~
 
-## Neustart und Prüfung
+Der XFCE-Autostart liegt unter `/home/cevik/.config/autostart/ticket-display-vnc.desktop`. Er ruft `/usr/local/bin/ticket-display-vnc` auf.
 
-```bash
-reboot
-```
+Wenn schon eine ältere VNC-Autostart-Regel eingerichtet wurde, diese deaktivieren. Zwei x11vnc-Prozesse können sich beim Zugriff auf Port 5900 gegenseitig stören.
 
-Anschließend auf Debian (in einer neuen SSH-Verbindung):
+## Wenn die Verbindung nicht klappt
 
-```bash
+~~~bash
 ss -tlnp | grep ':5900'
-```
+ip -4 -br addr
+~~~
 
-Erwartet: `192.168.19.174:5900`. Auf Windows im TightVNC Viewer `192.168.19.174::5900` eingeben und das VNC-Passwort verwenden.
+Wenn kein Port angezeigt wird, die Passwortdatei und den XFCE-Autostart prüfen. Der VNC-Start benötigt eine laufende grafische Sitzung; einfaches Ausführen aus SSH ohne `DISPLAY` reicht nicht.
 
-Falls Port 5900 nicht erscheint:
+Falls das Bild nur im TightVNC Viewer flackert, zunächst den XFCE-Kompositor testen:
 
-1. `ip -4 -br addr` prüfen (hat der PC noch `192.168.19.174`?).
-2. `ls -l /home/cevik/.vnc/passwd` prüfen.
-3. `cat /home/cevik/.config/autostart/ticket-display-vnc.desktop` prüfen.
-4. Direkt in der **grafischen** Sitzung von `cevik` den Befehl `/usr/local/bin/ticket-display-vnc` starten und Fehlermeldung ablesen; nicht aus reiner SSH-Sitzung ohne DISPLAY starten.
+~~~bash
+xfconf-query -c xfwm4 -p /general/use_compositing -s false
+~~~
 
-Wenn der Desktop flackert, XFCE-Kompositor testweise deaktivieren. Die VNC-Konfiguration verwendet bereits `-noxdamage`.
+Der VNC-Launcher verwendet bereits `-noxdamage`. Weitere Änderungen erst nach einem Vergleich zwischen lokalem HDMI-Bild und Fernansicht vornehmen.
 
-## Rückkehr zur verschlüsselten Variante
+## Direkten Zugriff wieder entfernen
 
-In `/etc/ticket-display.conf` wieder `VNC_LISTEN_IP="127.0.0.1"` setzen, neu anmelden oder neu starten und **alle direkten UFW-5900-Freigaben entfernen**. Anschließend Windows-SSH-Tunnel:
-
-```powershell
-ssh -N -L 5901:127.0.0.1:5900 cevik@192.168.19.174
-```
-
-TightVNC Viewer: `127.0.0.1::5901`.
+In `/etc/ticket-display.conf` wieder `VNC_LISTEN_IP="127.0.0.1"` einstellen und neu anmelden oder neu starten. Anschließend direkte Freigaben für Port 5900 in der Firewall löschen. Danach funktioniert der Zugriff wieder nur über den SSH-Tunnel.
