@@ -1,69 +1,54 @@
-# Checkliste für die Umsetzung
+# Checkliste: Ticketanzeige vor Ort
 
-**Installationsstart:** Freitag, 09.10.2026. Die neue Browser-Erweiterung muss nach Update und Neustart separat getestet werden.  
-**Betriebszeiten:** Montag–Freitag, 07:45–17:30 Uhr (Europe/Berlin).  
-**Status:** Installation/Tests auf echter Hardware noch offen.
+Die Ticketanzeige auf dem Debian-Tiny-PC läuft nach Rückmeldung aus dem Betrieb. Die folgende Liste dient als Abnahmehilfe bei Änderungen und Neuinstallationen.
 
-## Vorbereitung
+**Wichtig:** Nicht jedes einzelne Verhalten ist damit bereits getestet. Die Häkchen erst setzen, wenn der jeweilige Punkt am Gerät geprüft wurde.
 
-- [ ] Tiny-PC, TV und HDMI-Kabel vorhanden
-- [ ] PC per LAN im richtigen Netzwerk, DNS und Ticket-Webserver erreichbar
-- [ ] Debian 13 mit XFCE installiert
-- [ ] Ticketsystem-URL und gewünschtes Dashboard bekannt
-- [ ] Anzeige-/Servicekonto nur mit erforderlichen Leserechten
-- [ ] Firmenfreigabe für Bildschirmstandort, sichtbare Ticketdaten und Autologin geklärt
+## Grundfunktion
 
-## Installation
+- [ ] Debian startet ohne manuelle Anmeldung in XFCE.
+- [ ] Chromium öffnet die richtige Ticketseite im Vollbild.
+- [ ] Die Ticketanmeldung funktioniert auch nach längerer Laufzeit.
+- [ ] Nur die Ticket-Registerkarte lädt ungefähr alle 60 Sekunden neu.
+- [ ] Andere Webseiten und Präsentationen bleiben dabei ungestört.
+- [ ] Nach einem Neustart erscheint wieder die Ticketanzeige.
 
-- [ ] Repo geklont
-- [ ] `sudo bash scripts/install.sh` erfolgreich
-- [ ] `TICKET_URL` in `/etc/ticket-display.conf` gesetzt
-- [ ] `sudo reboot` durchgeführt
-- [ ] cevik automatisch angemeldet, Chromium startet mit Ticket-URL
-- [ ] VNC-Passwortdatei für cevik vorhanden und Server nur über 127.0.0.1:5900 erreichbar
-- [ ] Windows SSH-Tunnel und TightVNC Viewer funktionieren
-- [ ] Alte x11vnc-Autostart-Regel deaktiviert
-- [ ] ticketview erst nach erfolgreichem Test samt Profil gelöscht
-- [ ] Login in Ticketansicht funktioniert und Session läuft stabil
-- [ ] F11, Strg+L, Alt+Tab und Wechsel auf andere Inhalte funktionieren
+## Fernseher
 
-## TV-Steuerung (eine Variante genügt)
+- [ ] Am TV ist der richtige HDMI-Eingang ausgewählt.
+- [ ] Die vorgesehene Anzeigezeit 07:45–17:30 Uhr (Mo–Fr) funktioniert.
+- [ ] Der Fernseher bleibt während der Dienstzeit eingeschaltet.
+- [ ] Außerhalb der Dienstzeit und am Wochenende bleibt er aus bzw. im Standby.
+- [ ] Die Zeitsteuerung schaltet wirklich den Fernseher und nicht nur das HDMI-Signal ab.
+- [ ] Ein automatischer Einschalttimer springt nicht ungewollt auf TV-Empfang statt HDMI.
 
-- [ ] TV-interner Einschalt- und Standby-Zeitplan Mo–Fr möglich und eingestellt
-- [ ] **ODER** kompatibles CEC-Gerät erkannt (`sudo ticket-display-tv status`)
-- [ ] **ODER** passende Hardwarelösung wird nach der Erprobung festgelegt
-- [ ] TV geht wirklich in Standby, nicht bloß „Kein Signal“
-- [ ] TV startet nach Standby und zeigt den richtigen HDMI-Eingang
+## Netzwerk und Fernwartung
 
-## Automatik und Fehlersituationen
+- [ ] Der Tiny-PC erreicht den Ticketserver zuverlässig.
+- [ ] Bei Netzausfall wird kein scheinbar aktueller Ticketstand angezeigt.
+- [ ] Nach Wiederherstellung der Verbindung funktioniert die Ansicht wieder.
+- [ ] SSH-Zugriff klappt nur aus den freigegebenen Netzen.
+- [ ] VNC verbindet sich mit der laufenden XFCE-Sitzung.
+- [ ] VNC-Firewallregeln sind passend zum gewählten Zugriffsweg eingeschränkt.
+- [ ] RustDesk ist, falls installiert, separat konfiguriert und geprüft.
 
-- [ ] Ticketseite wird ungefähr alle 60 Sekunden automatisch neu geladen
-- [ ] In einem zweiten Tab geöffnete Webseite bleibt dabei unberührt
-- [ ] Ticket-Tab auf andere URL navigieren: keine automatische Aktualisierung dieser anderen Seite
-- [ ] Ticket-Tab zur konfigurierten URL zurückführen: Aktualisierung setzt wieder ein
-- [ ] Kein unerwünschter Browser-Gesamtneustart um 07:44
-- [ ] Zeitpunkt 07:45: TV ist eingeschaltet (werktags)
-- [ ] Zeitpunkt 17:30: TV im Standby (werktags)
-- [ ] Sa/So keine automatische Einschaltung
-- [ ] Neustart während Betriebszeit: Ticketseite wieder sichtbar
-- [ ] Neustart nach 17:30 oder am Wochenende: TV bleibt/kehrt in Standby
-- [ ] Stromausfall simuliert und BIOS Power Restore geprüft
-- [ ] Netzwerkunterbrechung und Wiederausbau der Verbindung getestet
-- [ ] Ticketdaten aktualisieren sich zuverlässig (appseitig/Reload)
-- [ ] Login-Timeout und mögliche Wiederanmeldung geklärt
-- [ ] Sicherheitsupdates und Wartungszuständigkeit vereinbart
+## Betrieb
 
-## Vor-Ort-Ergebnisse (manuell ergänzen)
+- [ ] Zugriffsrechte des Ticketkontos und Standort des Fernsehers sind freigegeben.
+- [ ] Ansprechpartner für Störungen sind intern festgelegt.
+- [ ] Updates und Wartung sind einem Verantwortlichen zugeordnet.
+- [ ] Ein Ausfall des Tiny-PCs oder des TV führt nicht unbemerkt zum dauerhaften Ausfall der Anzeige.
+- [ ] Gerät funktioniert nach geplantem Neustart bzw. Stromausfall wieder wie vorgesehen.
 
-| Prüfung | Ergebnis / Bemerkung |
-|---|---|
-| Tiny-PC | Offen |
-| TV-Modell | Offen |
-| Ticketsystem-URL | Nur lokal dokumentieren, falls intern |
-| TV-Methode (Wochenplan/CEC) | Offen |
-| Netzwerk/DNS | Offen |
-| Browser-Login | Offen |
-| Bildauflösung und Skalierung | Offen |
-| Verantwortlich | Offen |
+## Notizen bei der Abnahme
 
-**Keine internen Zugangsdaten, Token oder personenbezogenen Ticketinhalte ins Repository committen.**
+| Punkt | Ergebnis / Datum |
+| --- | --- |
+| Gerät und Standort | Vor Ort eintragen |
+| TV-Modell / gewählter HDMI-Eingang | Vor Ort eintragen |
+| TV-Steuerung (interner Timer / CEC / manuell) | Vor Ort eintragen |
+| Ticketaktualisierung | Vor Ort prüfen |
+| Fernwartung | Vor Ort prüfen |
+| Zuständige IT-Person | Intern dokumentieren |
+
+**Keine echten Zugangsdaten, vollständigen internen IP-Listen, privaten Schlüssel oder Ticketinhalte in dieses Repository committen.**
