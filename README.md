@@ -1,159 +1,92 @@
-# Ticketsystem – TV-Anzeige mit Tiny-PC
+# Ticketsystem – Ticketanzeige auf dem Fernseher
 
-Eine schlanke, lokal betriebene **Ticketanzeige im Browser**. Ein Debian-Tiny-PC zeigt das vorhandene Ticketsystem werktags auf einem Fernseher an. Andere Webseiten und Präsentationen können über den XFCE-Desktop geöffnet werden.
+Im Büro hängt ein Fernseher, auf dem die Ticketübersicht aus N-able MSP Manager angezeigt wird. Dafür läuft ein kleiner PC mit Debian 13. Chromium öffnet die Ticketseite nach dem Anmelden automatisch im Vollbild.
 
-## 👋 Neu im Team? Hier starten!
+Der Rechner ist bewusst einfach gehalten: Die Tickets werden im vorhandenen System verwaltet, nicht auf dem Tiny-PC. Der übernimmt nur die Anzeige. Bei Bedarf lassen sich auch andere Webseiten oder Präsentationen öffnen.
 
-**[Kurzanleitung für neue Mitarbeiterinnen und Mitarbeiter (ca. 2 Minuten)](docs/START-HIER.md)**
+**Stand:** Die Anzeige läuft vor Ort. Einige Punkte, vor allem die automatische TV-Steuerung und der dauerhafte Betrieb zusätzlicher Fernwartungssoftware, müssen getrennt geprüft werden. Die Dokumentation beschreibt den vorhandenen Aufbau und die dafür vorgesehenen Skripte.
 
-Dort findest du ohne Linux-Vorkenntnisse: **Was ist die Anzeige? Wann läuft sie? Wie wechsle ich zu anderen Inhalten? Was tun bei einer Störung?**
+## Für neue Kollegen
 
-**Für die IT:** Die ausführliche [Installationsanleitung](docs/INSTALLATION.md), [RustDesk-Fernwartung](docs/RUSTDESK.md), [bisherige VNC-Fernwartung](docs/DIRECT-VNC.md) und [Testcheckliste](docs/TESTPLAN.md) bleiben separat.
+Wer den Fernseher einfach nur benutzen möchte, findet hier die kurze Anleitung: **[Ticketanzeige im Alltag](docs/START-HIER.md)**.
 
-> **Projektstand (09.10.2026):** Debian/Tiny-PC wurde vor Ort eingerichtet. Die neue 60-Sekunden-Erweiterung ist im Repository implementiert, aber auf der Maschine noch **nicht** getestet. TV/CEC, Login und Ticket-Refresh müssen separat geprüft werden. Dieses Repository enthält **keine** Ticketdaten oder Zugangsdaten.
+## So ist das System aufgebaut
 
-## Gewünschter Betrieb
+| Bereich | Umsetzung |
+| --- | --- |
+| Rechner | Tiny-PC mit Debian 13, XFCE und LightDM |
+| Browser | Chromium, automatisch im Vollbild |
+| Tickets | Vorhandene Weboberfläche von N-able MSP Manager |
+| Aktualisierung | Chromium-Erweiterung für die Ticket-Registerkarte, etwa alle 60 Sekunden |
+| Benutzer | `cevik` mit automatischer grafischer Anmeldung |
+| Fernzugriff | SSH und x11vnc; RustDesk ist zusätzlich vorbereitet |
+| Betriebszeit | Montag bis Freitag, 07:45 bis 17:30 Uhr (Europe/Berlin) |
 
-| Eigenschaft | Vorgabe |
-|---|---|
-| Anzeige | Montag–Freitag, **07:45–17:30 Uhr** (Europe/Berlin) |
-| Samstag/Sonntag | TV aus / Standby |
-| Tiny-PC | bleibt eingeschaltet; startet nach Stromausfall wenn BIOS entsprechend eingestellt |
-| Betriebssystem | Debian 13 + XFCE (X11) + LightDM |
-| Browser | Chromium, automatischer Vollbildstart und 60-Sekunden-Refresh nur des Ticket-Tabs |
-| Ticketseite | vorhandener Webserver, URL vor Ort eintragen |
-| Andere Inhalte | F11 für Desktop-/Browser-Nutzung, Alt+Tab für andere Anwendungen |
-| TV-Steuerung | TV-interner Wochenplan **oder** HDMI-CEC bei kompatibler Hardware |
+Der Tiny-PC kann durchlaufen, auch wenn der Fernseher im Standby ist. Die geplanten Schaltzeiten bedeuten **nicht**, dass der TV in jeder Konfiguration zuverlässig ein- und ausschaltet. Das hängt vom Fernseher und der gewählten Steuerungsmethode ab.
 
-## Umstellung auf cevik (Benutzer ticketview wird abgelöst)
+### Fernsehsteuerung
 
-**Die ausführliche Migrationsanleitung steht unter [docs/MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md).** `ticketview` erst löschen, nachdem `cevik` nach dem Neustart die Ticketseite im Chromium anzeigt und VNC funktioniert. Die alte Chromium-Sitzung wird nicht automatisch übertragen; Ticket-Login ggf. einmal als `cevik` wiederholen. VNC ist standardmäßig nur auf `127.0.0.1:5900` über SSH erreichbar; ein direkter Zugriff per IP muss ausdrücklich lokal konfiguriert und in der Firewall begrenzt werden.
+Das Installationsskript richtet die Zeiten 07:45 und 17:30 Uhr ein. Die PC-seitigen Befehle wirken aber nur, wenn HDMI-CEC mit geeigneter Hardware tatsächlich funktioniert und `TV_CONTROL="cec"` gesetzt wurde.
 
-## Optionale Fernwartung mit RustDesk (Windows ↔ Debian)
-
-Für die Fernsteuerung **derselben XFCE-Sitzung, die der Fernseher anzeigt**, ist RustDesk als **separat installierbare, optionale Ergänzung** vorbereitet. Sie wird **nicht** durch den normalen Ticket-Installer aktiviert. Die bestehende Ticketanzeige und VNC bleiben erhalten.
-
-- **[RustDesk – Installation, eigener Firmenserver, Windows-Verbindung und Rückweg](docs/RUSTDESK.md)**
-- Linux-Installer: [`scripts/install-rustdesk.sh`](scripts/install-rustdesk.sh) – offizielle RustDesk-Version **1.5.0** mit SHA-256-Prüfung; Systemdienst bleibt zunächst deaktiviert.
-- Optionaler interner ID-/Relayserver: [`deploy/rustdesk-server/compose.yaml`](deploy/rustdesk-server/compose.yaml); wird nicht automatisch gestartet.
-
-**Betrieb im Unternehmen nur nach Freigabe:** Auf beiden Clients den genehmigten internen RustDesk-Server und dessen öffentlichen Schlüssel konfigurieren, bevor unbeaufsichtigter Zugriff aktiviert wird. Windows-Installation und Windows-Konfiguration erfolgen separat.
-
-## Einrichten / bereits installierten Tiny-PC aktualisieren
-
-Wenn Debian und das Repository bereits installiert sind, genügt:
-
-```bash
-cd ~/Ticketsystem  # oder der tatsächlich verwendete Klon-Pfad
-git pull
-sudo bash scripts/install.sh
-sudo reboot
-```
-
-Wenn das Repository als root unter `/root/Ticketsystem` liegt: `su -`, dann `cd /root/Ticketsystem`, `git pull`, `bash scripts/install.sh` und `reboot`.
-
-**Wichtig:** Die Datei `/etc/ticket-display.conf` mit deiner bereits eingetragenen Ticket-URL wird vom Installer **nicht** überschrieben. Die Browser-Erweiterung wird beim Anmelden automatisch aus dieser URL konfiguriert. Funktion überprüfen: `chrome://extensions` → **Ticket Display – 60s Refresh**. Siehe [Autorefresh-Dokumentation](docs/AUTO-REFRESH.md).
-
-## Erstinstallation – Schnellweg
-
-1. Debian 13 mit **XFCE** auf dem Tiny-PC installieren; LAN anschließen, Uhrzeit/Zeitzone prüfen.
-2. Repo klonen (bei privatem Repository Anmeldung über GitHub/SSH erforderlich):
-
-   ```bash
-   sudo apt update && sudo apt install -y git
-   git clone https://github.com/scncvk19/Ticketsystem.git
-   cd Ticketsystem
-   ```
-
-3. Installer auf einem **dedizierten** Anzeige-PC ausführen:
-
-   ```bash
-   sudo bash scripts/install.sh
-   ```
-
-   Er installiert benötigte Pakete und richtet die grafische Auto-Anmeldung, den Browser-Autostart, den lokalen VNC-Zugriff sowie die Cron-Zeiten für **cevik** ein. Er erstellt `ticketview` nicht erneut. Vorhandene `/etc/ticket-display.conf` wird **nicht überschrieben**.
-
-4. Ticket-URL in der lokalen Konfiguration anpassen (**keine Zugangsdaten in die URL schreiben**):
-
-   ```bash
-   sudo nano /etc/ticket-display.conf
-   # TICKET_URL="https://tickets.beispiel.intern"
-   ```
-
-5. Die TV-Variante auswählen:
-
-   - **TV-eigener Wochen-Zeitplan**: `TV_CONTROL="none"` belassen und im Fernseher Mo–Fr 07:45 ein / 17:30 aus konfigurieren. Achtung: Manche TVs können nur Abschalt-, aber keinen täglichen Einschaltplan.
-   - **HDMI-CEC**: nur bei nachweislich funktionierendem CEC-Adapter und aktivierter TV-CEC-Funktion `TV_CONTROL="cec"` einstellen. Tests: `sudo ticket-display-tv status`, `sudo ticket-display-tv on`, `sudo ticket-display-tv off`.
-
-6. Neustarten und testen:
-
-   ```bash
-   sudo reboot
-   # nach Anmeldung/über SSH:
-   sudo /usr/local/bin/ticket-display-diagnose
-   ```
-
-**Vor der Installation:** Der Installer richtet *absichtlich* einen automatischen Login ohne Passwortabfrage für die lokale Anzeige ein. Darum nur auf einem dafür vorgesehenen PC verwenden und das Ticketkonto auf minimale Leseberechtigungen begrenzen.
-
-## Tägliches Verhalten
-
-- Nach jedem Boot startet der Browser automatisch mit der Ticketseite, auch wenn der TV gerade aus ist.
-- **Alle 60 Sekunden** wird ausschließlich die konfigurierte Ticket-Registerkarte neu geladen, sofern sie noch die Ticket-URL anzeigt. Andere Tabs werden nicht angefasst.
-- Kein automatischer Browser-Gesamtneustart um 07:44 mehr; damit bleiben andere Inhalte ungestört. Nach einem PC-Neustart startet das Ticket-Fenster wieder mit der Ticketseite.
-- Um **07:45** wird per CEC der Fernseher eingeschaltet, falls CEC aktiviert ist.
-- Um **17:30** geht er per CEC in Standby, falls CEC aktiviert ist.
-- Beim Systemstart gleicht die Steuerung nach kurzer Verzögerung den TV-Zustand mit der Uhrzeit ab.
-- Bei `TV_CONTROL=none` arbeitet die PC-Zeitsteuerung ohne aktive TV-Schaltsignale; in diesem Fall muss die Zeitsteuerung des TVs selbst funktionieren.
-
-Die TV-Steuerung via HDMI-CEC ist **hardwareabhängig**; ein gewöhnlicher Tiny-PC-HDMI-Anschluss beherrscht CEC nicht unbedingt. Ein unterstützter USB-HDMI-CEC-Adapter kann erforderlich sein. Das Abschalten eines HDMI-Signals bedeutet bei Fernsehern nicht zwangsläufig Standby.
+Andernfalls bleibt `TV_CONTROL="none"` und die Zeitsteuerung muss am Fernseher selbst erfolgen. Bei älteren Samsung-Geräten kann der Einschalttimer auf TV statt HDMI wechseln. Das ist kein Fehler des Debian-PCs. Weitere Hinweise: [Installation](docs/INSTALLATION.md).
 
 ## Bedienung
 
-| Zweck | Bedienung |
-|---|---|
-| Normale Ticketanzeige | nach Anmeldung automatisch im Vollbild |
-| Andere Webadresse aufrufen | **F11** (Vollbild verlassen), **Strg+L**, URL eingeben |
-| Präsentation anzeigen | **Alt+Tab** oder Chromium minimieren; Datei/Programm am XFCE-Desktop öffnen |
-| Tickets wieder anzeigen | Zum Ticket-Tab wechseln oder konfigurierte Ticket-URL wieder aufrufen; nach PC-Neustart startet sie automatisch |
-| Manuell TV schalten (CEC) | `sudo ticket-display-tv on` / `sudo ticket-display-tv off` |
-| Sofort Ausgangszustand prüfen | `sudo ticket-display-tv sync` |
+| Was soll passieren? | So geht's |
+| --- | --- |
+| Ticketübersicht anzeigen | Wird nach dem Start von Chromium automatisch geöffnet |
+| Zwischen Fenstern wechseln | `Alt + Tab` |
+| Browser-Vollbild ändern | `F11`; alternativ Chromium-Menü → Zoom → Vollbild |
+| Andere Webseite öffnen | `Strg + L`, Adresse eingeben |
+| Wieder zu den Tickets | Zur Ticket-Registerkarte wechseln |
+| Fernwartung | Über die eingerichtete SSH-/VNC-Verbindung; Details unter [VNC](docs/DIRECT-VNC.md) |
 
-## Dokumentation und Dateien
+Die Erweiterung lädt nur die konfigurierte Ticket-Registerkarte neu. Andere Tabs und geöffnete Präsentationen bleiben davon unberührt. Wird die Ticket-URL verlassen, pausiert die Aktualisierung für diese Registerkarte. Näheres steht in [AUTO-REFRESH.md](docs/AUTO-REFRESH.md).
 
-- **[Start hier – Kurzanleitung für neue Teammitglieder](docs/START-HIER.md)**
-- [Installation und Konfiguration](docs/INSTALLATION.md)
-- [Checkliste / Funktionstest](docs/TESTPLAN.md)
-- [Konfigurationsvorlage](config/ticket-display.conf.example)
-- [Installer](scripts/install.sh)
-- [Browser-Session](scripts/browser-session.sh)
-- [Autorefresh – Bedienung, Tests und Grenzen](docs/AUTO-REFRESH.md)
-- [Chromium-Erweiterung](extension/background.js)
-- [Manueller Browser-Neustart (nicht zeitgesteuert)](scripts/refresh-browser.sh)
-- [TV-Steuerung](scripts/tv-control.sh)
-- [Diagnose](scripts/diagnostics.sh)
-- [VNC-Autostart (SSH-Standard, optional direkte IP)](scripts/vnc-session.sh)
-- [Migration zu cevik](docs/MIGRATION-CEVIK.md)
-- [Optionaler direkter VNC-Zugriff über IP](docs/DIRECT-VNC.md)
-- **[RustDesk-Fernwartung für Windows und Linux](docs/RUSTDESK.md)**
-- [RustDesk Linux-Installationsskript (opt-in)](scripts/install-rustdesk.sh)
-- [Optionale RustDesk-Server-Vorlage](deploy/rustdesk-server/compose.yaml)
+## Einrichtung und Updates
 
-## Sicherheit
+Die Installation ist für einen eigenen Anzeige-PC gedacht, **nicht für normale Mitarbeiter-PCs**. Das Skript richtet unter anderem den grafischen Autologin, Chromium-Autostart und die TV-Zeitsteuerung ein.
 
-- Keine Passwörter, Session-Cookies, Tokens, Screenshots oder personenbezogenen Ticketdaten in GitHub speichern.
-- Eigenes, eingeschränktes Ticket-Anzeigekonto mit *Leserechten* und nur den nötigen Projekten/Queues benutzen.
-- Interne HTTPS-Seite und gültiges Zertifikat verwenden; Zertifikatsprüfung nicht abschalten.
-- Fernzugriff nur über das interne Netz/VPN; keine öffentliche Freigabe des TVs oder Tiny-PCs.
-- Falls das Ticketsystem personenbezogene Informationen anzeigt, Standort/Sichtschutz sowie betriebliche Datenschutzvorgaben beachten.
-- Für sensible Umgebungen ist ein passwortloser Display-Login nur dann sinnvoll, wenn die lokale physische Zugriffssituation kontrolliert ist.
+Wenn das Repository auf dem Tiny-PC unter `/root/Ticketsystem` liegt:
 
-## Noch offen (beim Einrichten ausfüllen)
+~~~bash
+su -
+cd /root/Ticketsystem
+git pull
+bash scripts/install.sh
+reboot
+~~~
 
-- [ ] Name/Modell des Tiny-PCs und TV-Modell
-- [ ] Ticket-URL, Authentifizierung und gewünschter Dashboard-/Filterlink
-- [ ] TV-CEC-Verfügbarkeit oder funktionierender TV-Wochenplan
-- [ ] Netzwerkkonnektivität, DNS, Zertifikate, Bildschirmauflösung
-- [ ] 60-Sekunden-Refresh der Ticket-Registerkarte und ungestörter Wechsel auf andere Inhalte auf dem Tiny-PC getestet
-- [ ] Umgang mit Login-Timeout und Ticketanzeige beim Netzwerkausfall
+Bei einem anderen Speicherort zuerst ins richtige Repository-Verzeichnis wechseln.
 
-Lizenz: vorerst keine gesetzt. Das Projekt ist zunächst eine interne Bereitstellungs- und Dokumentationsvorlage.
+Die lokale Konfiguration liegt unter `/etc/ticket-display.conf`. Der Installer lässt eine bereits vorhandene Datei unverändert. Dort stehen die Ticket-URL, der Desktop-Benutzer, die TV-Methode und gegebenenfalls die IP für VNC. **Keine Passwörter oder Tokens dort oder im Repository ablegen.**
+
+Eine vollständige Neuinstallation ist in [INSTALLATION.md](docs/INSTALLATION.md) beschrieben.
+
+## Fernwartung
+
+**SSH / VNC:** x11vnc zeigt denselben XFCE-Desktop, den der Fernseher anzeigt. Standardmäßig läuft es über einen SSH-Tunnel. Ein direkter VNC-Zugriff per IP ist optional möglich, aber unverschlüsselt und deshalb nur mit gezielter Firewall-Freigabe in einem freigegebenen Netz vertretbar. Die Konfiguration steht in [DIRECT-VNC.md](docs/DIRECT-VNC.md).
+
+**RustDesk:** Ein separates Installationsskript und eine Vorlage für einen selbst betriebenen RustDesk-Server sind vorbereitet. RustDesk wird **nicht** durch den normalen Installer eingerichtet. Eine getestete RustDesk-Verbindung am Firmen-Tiny-PC ist hier noch nicht dokumentiert. Siehe [RUSTDESK.md](docs/RUSTDESK.md).
+
+## Dokumentation
+
+- [START-HIER.md](docs/START-HIER.md) – kurze Anleitung für Mitarbeiter
+- [INSTALLATION.md](docs/INSTALLATION.md) – Debian einrichten und prüfen
+- [AUTO-REFRESH.md](docs/AUTO-REFRESH.md) – 60-Sekunden-Aktualisierung
+- [DIRECT-VNC.md](docs/DIRECT-VNC.md) – Fernzugriff über VNC
+- [RUSTDESK.md](docs/RUSTDESK.md) – optionale RustDesk-Bereitstellung
+- [TESTPLAN.md](docs/TESTPLAN.md) – Prüfung vor Ort
+- [MIGRATION-CEVIK.md](docs/MIGRATION-CEVIK.md) – Dokumentation des Benutzerwechsels
+
+Die zugehörigen Skripte liegen im Ordner [scripts](scripts). Die lokale Chromium-Erweiterung liegt unter [extension](extension).
+
+## Betrieb und Sicherheit
+
+Auf dem Bildschirm können Kundennamen und andere interne Informationen stehen. Deshalb muss der Standort des Fernsehers dafür geeignet sein. Für das Dashboard sollte ein eigenes Ticketkonto mit möglichst wenigen Berechtigungen verwendet werden.
+
+Bitte keine Ticketinhalte, Login-Daten, internen Konfigurationen oder privaten Schlüssel nach GitHub hochladen. Änderungen an Firewall, Fernzugriff und Benutzerrechten gehören in die Hände der zuständigen IT.
+
+**Noch zu prüfen bzw. vor Ort zu dokumentieren:** TV-Einschalten und HDMI-Quelle über den gesamten Arbeitstag, Verhalten bei Netzwerkverlust, Ticket-Login nach längerer Laufzeit und die tatsächliche Zuverlässigkeit des 60-Sekunden-Refreshs. Dass die Anzeige läuft, ersetzt diese Einzeltests nicht.
+
+Für das Repository ist derzeit keine eigene Lizenzdatei hinterlegt.
