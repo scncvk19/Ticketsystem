@@ -1,136 +1,109 @@
-# RustDesk-Fernwartung für die Ticketanzeige (Debian 13 ↔ Windows)
+# RustDesk für die Fernwartung
 
-**Ziel:** Den bereits laufenden **XFCE/X11-Desktop auf dem Fernseher** von Windows aus fernsteuern, statt eine separate RDP-Sitzung zu öffnen. Die vorhandene Chromium-Ticketanzeige (inkl. 60-Sekunden-Refresh), LightDM-Anmeldung sowie x11vnc bleiben zunächst bestehen.
+Mit RustDesk soll der Tiny-PC künftig von Windows aus fernsteuerbar sein. Anders als bei einer üblichen separaten RDP-Sitzung ist dabei derselbe XFCE-Desktop zu sehen, der auf dem Fernseher läuft.
 
-> **Stand:** Bereitstellung im GitHub-Repository vorbereitet, **nicht** auf dem Firmen-Tiny-PC installiert oder dort getestet. Die Windows-Installation erfolgt separat durch den Administrator.
+**Stand:** Das Installationsskript und eine Vorlage für einen eigenen RustDesk-Server liegen im Repository. Ob RustDesk am Firmen-Tiny-PC bereits erfolgreich installiert und getestet wurde, ist hier nicht bestätigt. x11vnc bleibt deshalb als Rückfalllösung bestehen.
 
-## Grundsätze für den Arbeitsplatz
+RustDesk wird nicht über den normalen Ticket-Installer installiert.
 
-1. **Vor der Bereitstellung** klären, ob die betriebliche IT die Software, Fernzugriff auf Ticketdaten und ggf. einen eigenen Relay-/ID-Server erlaubt. Schutzbedarf und Datenschutz beachten.
-2. **Kein öffentlicher RustDesk-Vermittlungsserver für den Produktivbetrieb**: nur firmeneigener Server im LAN/VPN oder eine andere ausdrücklich genehmigte Infrastruktur.
-3. **Keine festen Passwörter, IDs, Schlüssel oder Firmen-IP-Adressen im GitHub-Repository** hinterlegen. RustDesk-Passwort und Server-Key ausschließlich lokal/vertraulich verwalten.
-4. **x11vnc noch nicht entfernen.** Nach der RustDesk-Installation zunächst eine funktionierende Fernverbindung inklusive Neustart testen.
-5. RustDesk ist ein separates Paket: der vorhandene `scripts/install.sh` installiert es **nicht** automatisch und verändert weder RustDesk noch die bestehenden Ticket-Funktionen.
+## Vor der Einrichtung
 
-## A. Linux-Client auf dem Ticket-Tiny-PC installieren
+Für den Einsatz im Betrieb brauchen wir eine Freigabe der IT und einen festgelegten Zugriffsweg. Vorgesehen ist ein eigener ID-/Relayserver im Firmennetz oder über das freigegebene VPN.
 
-Voraussetzungen: Debian 13 `amd64`, bestehende grafische XFCE/X11-Sitzung, root-/sudo-Rechte, HTTPS-Zugang zu den offiziellen GitHub-Releases.
+Keine Passwörter, Geräte-IDs, Firmendomains oder privaten Schlüssel im Repository ablegen. Die Ticketanzeige kann personenbezogene Informationen enthalten. Fernsteuerung, Dateitransfer und Zwischenablage deshalb nur so weit erlauben, wie sie wirklich benötigt werden.
 
-Im Terminal auf Debian:
+## RustDesk auf Debian installieren
 
-```bash
+Voraussetzung ist Debian auf `amd64` mit bestehender XFCE/X11-Sitzung.
+
+Liegt der Klon unter `/root/Ticketsystem`:
+
+~~~bash
 su -
 cd /root/Ticketsystem
 git pull
 bash scripts/install-rustdesk.sh
-```
+~~~
 
-Falls das Repository woanders liegt, diesen Pfad entsprechend ersetzen.
+Das Skript lädt die festgelegte Version **1.5.0** aus der offiziellen GitHub-Release und prüft ihren SHA-256-Wert. Erst dann wird das Debian-Paket installiert.
 
-Der Installer:
+Nach der Installation stoppt und deaktiviert das Skript den RustDesk-Systemdienst. **Achtung:** Das Debian-Paket kann den Dienst während seiner Installation kurz starten. Falls schon diese kurze Verbindung nach außen nicht erlaubt ist, den Zugriff vorab durch die Firmenfirewall oder eine isolierte Installation unterbinden.
 
-- lädt ausschließlich die bekannte, offizielle **RustDesk-Release 1.5.0** (`rustdesk-1.5.0-x86_64.deb`);
-- prüft den fest hinterlegten **SHA-256** vor der Installation;
-- verwendet `apt-get`, um die Paketabhängigkeiten korrekt zu installieren;
-- **stoppt und deaktiviert unmittelbar nach der Installation** den RustDesk-Systemdienst, damit unbeaufsichtigter Zugriff erst nach Freigabe und Serverkonfiguration eingeschaltet wird;
-- ändert **keine** Ticket-Konfiguration, Browser-Autostarts, Fernsehzeiten, VNC- oder UFW-Regeln.
+Die Ticketanzeige, die Browser-Konfiguration und die VNC-Einstellungen werden dabei nicht verändert.
 
-Hinweis: Der Paketinstaller kann einen Dienst beim Installieren kurzzeitig starten; wer jede mögliche Verbindung zu öffentlichen RustDesk-Servern unterbinden muss, sollte den Netzwerkzugriff vorher über die Unternehmensfirewall sperren oder ein freigegebenes, isoliertes Installationsverfahren nutzen.
+## Eigenen RustDesk-Server betreiben
 
-**Paketversion aktualisieren:** Bei einer neuen RustDesk-Version müssen Release-URL, Version und SHA-256 gemeinsam anhand der offiziellen Release-Daten überprüft und im Skript geändert werden. Nicht einfach `latest` ungeprüft ausführen.
+Falls noch kein genehmigter Server vorhanden ist, gibt es unter [deploy/rustdesk-server](../deploy/rustdesk-server) eine Docker-Compose-Vorlage. Sie gehört auf eine **separate Server-VM**, nicht auf den Anzeige-PC.
 
-## B. Firmeninternen RustDesk-Server bereitstellen (optional, aber empfohlen)
+Die beiden Komponenten:
 
-Falls es noch **keinen** freigegebenen RustDesk-ID-/Relayserver gibt, ist unter [`deploy/rustdesk-server/compose.yaml`](../deploy/rustdesk-server/compose.yaml) eine Docker-Compose-Vorlage für **RustDesk Server OSS** hinterlegt.
+- `hbbs` vermittelt die Verbindungen und Geräte-IDs.
+- `hbbr` übernimmt bei Bedarf die Weiterleitung (Relay).
 
-**Den Server auf einer separaten Unternehmens-VM/einem separaten Server betreiben**, nicht auf dem Ticket-Tiny-PC. Die Vorlage ist nicht automatisch gestartet. Sie verwendet die beiden offiziellen RustDesk-Server-Komponenten:
+Auf dem Server mit Docker und Compose:
 
-- `hbbs`: ID-/Vermittlungsserver
-- `hbbr`: Relayserver
-
-Auf der **Server-VM**, nach Installation von Docker Engine und Compose:
-
-```bash
+~~~bash
 cd /pfad/zum/Ticketsystem/deploy/rustdesk-server
 cp .env.example .env
 nano .env
-```
+~~~
 
-`RUSTDESK_BIND_IP` = **tatsächlich auf der Server-VM vorhandene** IPv4-Adresse im Firmen-LAN/VPN (nicht `0.0.0.0`, nicht die Beispiel-IP).
+In der lokalen `.env` müssen die tatsächliche Bind-Adresse des Servers (`RUSTDESK_BIND_IP`) und sein interner, für beide Clients erreichbarer Name (`RUSTDESK_SERVER_HOST`) eingetragen werden.
 
-`RUSTDESK_SERVER_HOST` = interner DNS-Name oder IP, der/die für **beide** Clients erreichbar ist, z. B. der Name des Firmen-Servers; bei Relay dieselbe Adresse verwenden.
+Danach:
 
-Dann auf der Server-VM:
-
-```bash
+~~~bash
 mkdir -p data
 chmod 700 data
 docker compose config
 docker compose up -d
 docker compose ps
-```
+~~~
 
-**Wichtige technische Hinweise:**
+Die Vorlage verwendet das festgelegte Server-Image `rustdesk/rustdesk-server:1.1.16`. Vor dem Produktiveinsatz den Versionsstand und die Herkunft des Images prüfen. Aktualisierungen bewusst durchführen und bei Bedarf per Digest pinnen.
 
-- Compose verwendet das offizielle, **versionsgebundene Image `rustdesk/rustdesk-server:1.1.16`**. Vor einem produktiven Rollout Image-Herkunft/Sicherheitsstand prüfen; für maximale Reproduzierbarkeit bei Bedarf zusätzlich einen freigegebenen Image-Digest pinnen. Updates bewusst testen.
-- Docker-Publishing von Ports kann Host-Firewall-/UFW-Regeln umgehen. Die Adresseinschränkung aus `.env` und **zusätzlich** die zentrale Firewall/VPN-Richtlinie kontrollieren.
-- Nur für die genehmigten Windows-/Linux-Clients über internes LAN oder VPN erreichbar machen, **keine Internet-Portweiterleitung**.
-- Ohne Webclient benötigt der Server laut Dokumentation normalerweise TCP **21115**, TCP/UDP **21116**, TCP **21117**. TCP 21118/21119 (Webclients) sind in unserer Vorlage **nicht** veröffentlicht. Weitere Zugriffe und Optionen nach Bedarf und Sicherheitsfreigabe prüfen.
-- `data/` ist persistent, enthält auch die **private Serveridentität**. Sichern, Backup verschlüsseln, Zugriff einschränken und **niemals nach GitHub pushen**.
-- Öffentlichen Serversignaturschlüssel nach dem ersten Start lokal abrufen:
+Die Vorlage veröffentlicht die für einen normalen Clientbetrieb vorgesehenen Ports TCP **21115**, TCP/UDP **21116** und TCP **21117**. Sie sollte ausschließlich aus dem freigegebenen LAN/VPN erreichbar sein. **Keine Router-Portweiterleitung ins Internet einrichten.** Docker-Portfreigaben können Host-Firewallregeln umgehen; deshalb auch die externe Firewall prüfen.
 
-  ```bash
-  cat data/id_ed25519.pub
-  ```
+In `data/` liegen die Serveridentität und private Schlüssel. Diesen Ordner sichern, aber **niemals nach GitHub hochladen**. Die `.gitignore` nimmt ihn ausdrücklich aus.
 
-  Diesen **öffentlichen** Schlüssel auf beiden RustDesk-Clients im Feld `Key` konfigurieren. `id_ed25519` **ohne** `.pub` ist privat und darf niemals geteilt werden.
+## Windows- und Linux-Client verbinden
 
-Dokumentation: [Offizielles Docker-Setup](https://rustdesk.com/docs/en/self-host/rustdesk-server-oss/docker/) und [Clientkonfiguration](https://rustdesk.com/docs/en/self-host/client-configuration/).
+Wenn der Server läuft, zuerst seinen **öffentlichen** Schlüssel auslesen:
 
-## C. RustDesk auf Linux und Windows konfigurieren
+~~~bash
+cat data/id_ed25519.pub
+~~~
 
-Auf **beiden** Rechnern in RustDesk über **Einstellungen → Netzwerk → ID-/Relay-Server**:
+Die Datei `id_ed25519` ohne `.pub` ist privat und darf nicht weitergegeben werden.
 
-1. **ID Server**: interne Firmenserver-Adresse (`RUSTDESK_SERVER_HOST`, gegebenenfalls mit Port `21116`).
-2. **Key**: Inhalt der `id_ed25519.pub` des Firmenservers.
-3. **Relay Server**: kann nach offizieller Dokumentation meist leer bleiben, solange Standardport `21117` und derselbe Server verwendet werden.
-4. Verbindung zum Firmenserver prüfen; nicht auf einen öffentlichen Server zurückfallen lassen.
+Auf **beiden** RustDesk-Clients unter **Einstellungen → Netzwerk → ID-/Relay-Server** denselben internen ID-Server und den öffentlichen Schlüssel (`Key`) hinterlegen. Bei Standardport 21117 kann das Relay-Feld normalerweise leer bleiben.
 
-Die Windows-Version installierst und konfigurierst du selbst. Auf Debian die RustDesk-Anwendung aus dem XFCE-Anwendungsmenü öffnen und dieselbe Serveradresse/Key setzen.
+Die Windows-Installation erfolgt separat. Erst wenn Serveradresse, Berechtigungen und der Zugriff abgestimmt sind, wird auf Debian der Dienst für unbeaufsichtigten Zugriff aktiviert:
 
-**Unbeaufsichtigter Zugriff** darf erst nach Freigabe aktiviert werden. Festes Zugangspasswort nur lokal in der RustDesk-Oberfläche setzen, stark und individuell wählen, niemals hier dokumentieren. Berechtigungen (Dateiübertragung, Clipboard, Rechte zur Steuerung) auf das erforderliche Minimum reduzieren.
-
-Erst **nach** gültiger Server-/Clientkonfiguration und IT-Freigabe den RustDesk-Dienst auf Debian bewusst aktivieren:
-
-```bash
+~~~bash
 sudo systemctl enable --now rustdesk.service
 systemctl is-active rustdesk.service
-```
+~~~
 
-Prüfen, ob die **tatsächlich angezeigte** RustDesk-ID des Tiny-PCs von Windows aus erreicht werden kann und dabei genau derselbe XFCE-Desktop wie auf dem Fernseher erscheint. Die laufende Ticketanzeige darf davon nicht unterbrochen werden.
+Ein dauerhaftes Passwort nur lokal in RustDesk setzen, nicht im Repository dokumentieren.
 
-## D. Abnahme / Rollback
+## Nach der Installation prüfen
 
-- [ ] Zustimmung zur Fernwartung und Sichtbarkeit von Ticketdaten eingeholt
-- [ ] RustDesk-Paketversion und SHA-256 erfolgreich geprüft
-- [ ] Nur den genehmigten Firmen-RustDesk-Server auf **beiden** Clients eingetragen, Key geprüft
-- [ ] Verbindung von Windows zeigt denselben XFCE-Desktop wie HDMI-TV
-- [ ] Chromium bleibt im Vollbild, 60-Sekunden-Refresh funktioniert
-- [ ] Fernverbindung ohne Flackern und ohne unbeabsichtigte Anzeigeunterbrechung
-- [ ] Nach **Neustart des Tiny-PCs** Fernzugriff verfügbar, Ticketanzeige automatisch sichtbar
-- [ ] Netz-/Serverausfall simuliert: Ticketanzeige lokal weiter nutzbar
-- [ ] Erst danach entscheiden, ob x11vnc noch als Fallback benötigt wird
+- [ ] Beide Clients verwenden den genehmigten Firmenserver.
+- [ ] Die Verbindung von Windows zeigt genau den Desktop am Fernseher.
+- [ ] Chromium und die Ticketaktualisierung laufen weiter.
+- [ ] RustDesk startet auch nach einem Neustart zuverlässig.
+- [ ] Ein Server- oder Verbindungsabbruch beeinflusst die lokale Ticketanzeige nicht.
+- [ ] Zugriff, Dateiübertragung und Zwischenablage sind auf das Nötigste begrenzt.
 
-**Rollback**, falls RustDesk stört:
+Erst danach entscheiden, ob VNC als zusätzliche Fernwartungsmöglichkeit gebraucht wird.
 
-```bash
+Wenn RustDesk stört, den Dienst stoppen:
+
+~~~bash
 sudo systemctl disable --now rustdesk.service
-```
+~~~
 
-Damit wird der RustDesk-Dienst gestoppt; **x11vnc und die Ticketanzeige bleiben unverändert**. Die Software kann für einen späteren Versuch installiert bleiben.
+Das entfernt RustDesk nicht. Die bisherige Ticketanzeige und x11vnc werden dadurch nicht umgestellt.
 
-**Wichtig:** Das GitHub-Repository stellt Skripte und Dokumentation bereit. Es richtet *keinen* Arbeitsplatzrechner von allein ein und startet *keinen* RustDesk-Server automatisch.
-
-## Warum nicht einfach xrdp?
-
-Das übliche `xrdp`-Setup startet eine **zusätzliche** Sitzung. Bei der Ticketanzeige möchten wir gerade die sichtbare XFCE-Sitzung am Fernseher fernsteuern. Deshalb ist RustDesk für diesen Anwendungsfall geeigneter.
+Weitere Hinweise in der [offiziellen RustDesk-Dokumentation](https://rustdesk.com/docs/en/self-host/rustdesk-server-oss/docker/).
